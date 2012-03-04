@@ -1,7 +1,6 @@
 *.o
 *.swp
 *.pyc
-*.a
 .DS_Store
 
 android/bin
