@@ -8,3 +8,5 @@ android/bin
 android/libs
 android/obj
 android/gen
+android/local.properties
+android/jni/config.cpp

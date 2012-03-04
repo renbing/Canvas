@@ -33,6 +33,10 @@
 #include "network.h"
 #include "timer.h"
 
+// 测试变量
+extern void test();
+extern const char *site;
+
 // Android资源文件zip读取全局变量
 zip *apkArchive;
 
@@ -69,12 +73,6 @@ void Java_com_woyouquan_Canvas_nativeInit( JNIEnv *env, jclass cls, jstring apkP
 	{
 		LOG("Loading APK failed");
 	}
-
-	//zipTest();
-	//jsTest();
-	//testTimerCreate(1000, true);
-	socketTest();
-	//curlTest();
 
 	LOG("canvas init");
 }
@@ -129,10 +127,7 @@ void Java_com_woyouquan_EAGLRenderer_nativeResize( JNIEnv *env, jobject obj, jin
 	glDisable(GL_CULL_FACE);
 
 	Locker locker;
-	//CV8Context::getInstance()->run("http://10.0.2.9/~renkins/acron/");	
-	//CV8Context::getInstance()->run("http://192.168.1.164/~renkins/acron/");	
-	//CV8Context::getInstance()->run("http://192.168.1.104/~renkins/sprite/");	
-	CV8Context::getInstance()->run("http://192.168.43.188/~renkins/sprite/");
+	CV8Context::getInstance()->run(site);
 }
 
 void Java_com_woyouquan_EAGLRenderer_nativeRender( JNIEnv *env )
