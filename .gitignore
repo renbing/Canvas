@@ -1,0 +1,10 @@
+*.o
+*.swp
+*.pyc
+*.a
+.DS_Store
+
+android/bin
+android/libs
+android/obj
+android/gen
