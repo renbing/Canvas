@@ -335,19 +335,14 @@ void socketTest()
 		}
 		LOG("myIP: %s %u %i.%i.%i.%i\n", p->ifa_name, ip, (ip>>24)&0xFF, (ip>>16)&0xFF, (ip>>8)&0xFF, (ip>>0)&0xFF);
 
-		addr = (struct sockaddr_in *)(p->ifa_netmask);
+		addr = (struct sockaddr_in *)(p->ifa_broadaddr);
 		if( !addr )
 		{
-			LOG("not netmask");
+			LOG("not broadcast ip");
 			continue;
 		}
 		
 		ip = ntohl(addr->sin_addr.s_addr);
-		if( ip == 0 || ip == 0xff000000) // 127.0.0.1
-		{
-			LOG("localhost netmask");
-			continue;
-		}
 		
 		LOG("broadcast IP: %u %i.%i.%i.%i\n", ip, (ip>>24)&0xFF, (ip>>16)&0xFF, (ip>>8)&0xFF, (ip>>0)&0xFF);
 	}

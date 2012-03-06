@@ -22,7 +22,8 @@
 
 #include "network.h"
 
-using namespace std;
+using std::string;
+using std::vector;
 
 namespace StringUtil
 {

@@ -9,7 +9,7 @@ LOCAL_PATH := $(ORG_PATH)
 
 LOCAL_MODULE    := gljni
 LOCAL_CFLAGS    := -Werror
-LOCAL_SRC_FILES := main.cpp test.cpp point.cpp image.cpp context.cpp canvas.cpp timer.cpp network.cpp http.cpp js.cpp ifaddrs-android.cpp config.cpp
+LOCAL_SRC_FILES := main.cpp test.cpp point.cpp image.cpp context.cpp canvas.cpp timer.cpp network.cpp http.cpp js.cpp ifaddrs-android.cpp config.cpp socket.cpp
 
 LOCAL_C_INCLUDES:= $(NDKROOT)/sources/cxx-stl/stlport/stlport $(LOCAL_PATH)/ $(LOCAL_PATH)/include $(LOCAL_PATH)/include/v8 $(LOCAL_PATH)/include/png
 

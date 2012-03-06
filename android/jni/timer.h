@@ -22,7 +22,7 @@
 #include <vector>
 
 using namespace v8;
-using namespace std;
+using std::vector;
 
 
 typedef struct

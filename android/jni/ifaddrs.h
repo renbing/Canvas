@@ -16,8 +16,8 @@
  *
  * Changes:
  *
- *	2011-08-17 Gregg Hamilton for OpenHome (http://openhome.org/wiki/OhNet:What)
- *			Split file into header and source for compilation against C code.
+ *    2011-08-17 Gregg Hamilton for OpenHome (http://openhome.org/wiki/OhNet:What)
+ *            Split file into header and source for compilation against C code.
  */
 
 #ifndef IFADDRS_ANDROID_H_included
@@ -31,7 +31,10 @@
 
 #include <net/if.h>
 #include <netinet/in.h>
+#include <arpa/inet.h>
 #include <unistd.h>
+
+#include "global.h"
 
 // A smart pointer that closes the given fd on going out of scope.
 // Use this when the fd is incidental to the purpose of your function,
@@ -79,9 +82,12 @@ struct ifaddrs {
     // Interface netmask;
     struct sockaddr* ifa_netmask;
 
+    // Interface broadcast
+    struct sockaddr* ifa_broadaddr;
+
 #ifdef __cplusplus
     ifaddrs(ifaddrs* next)
-    : ifa_next(next), ifa_name(NULL), ifa_flags(0), ifa_addr(NULL), ifa_netmask(NULL)
+    : ifa_next(next), ifa_name(NULL), ifa_flags(0), ifa_addr(NULL), ifa_netmask(NULL), ifa_broadaddr(NULL)
     {
     }
 
@@ -90,12 +96,13 @@ struct ifaddrs {
         delete[] ifa_name;
         delete ifa_addr;
         delete ifa_netmask;
+        delete ifa_broadaddr;
     }
 
     // Sadly, we can't keep the interface index for portability with BSD.
     // We'll have to keep the name instead, and re-query the index when
     // we need it later.
-    bool setNameAndFlagsByIndex(int interfaceIndex) {
+    bool setNameAndFlagsByIndex(int interfaceIndex, int family) {
         // Get the name.
         //interfaceIndex = 0;
         char buf[IFNAMSIZ];
@@ -111,6 +118,7 @@ struct ifaddrs {
         if (fd.get() == -1) {
             return false;
         }
+
         ifreq ifr;
         memset(&ifr, 0, sizeof(ifr));
         strcpy(ifr.ifr_name, name);
@@ -119,6 +127,50 @@ struct ifaddrs {
             return false;
         }
         ifa_flags = ifr.ifr_flags;
+
+        if (ioctl(fd.get(), SIOCGIFNETMASK, &ifr) < 0)
+        {
+            return false;
+        }
+        
+        sockaddr_storage* ssn = new sockaddr_storage;
+        ssn->ss_family = family;
+
+        if (family == AF_INET) {
+            struct sockaddr_in *sin = (struct sockaddr_in *)ssn;
+            memcpy(sin, &ifr.ifr_addr, sizeof(struct sockaddr_in));
+        } else if (family == AF_INET6) {
+            struct sockaddr_in6 *sin = (struct sockaddr_in6 *)ssn;
+            memcpy(sin, &ifr.ifr_addr, sizeof(struct sockaddr_in6));
+        }
+
+        ifa_netmask = reinterpret_cast<sockaddr*>(ssn);
+
+        if (ioctl(fd.get(), SIOCGIFBRDADDR, &ifr) < 0)
+        {
+            return false;
+        }
+	
+		/*
+		struct sockaddr_in sin;
+		memcpy(&sin, &ifr.ifr_addr, sizeof(sin));
+		char *mask_get = inet_ntoa(sin.sin_addr);
+		LOG("mask:%s\n", mask_get);
+		*/
+        
+        sockaddr_storage *ssb = new sockaddr_storage;
+        ssb->ss_family = family;
+
+        if (family == AF_INET) {
+            struct sockaddr_in *sin = (struct sockaddr_in *)ssb;
+            memcpy(sin, &ifr.ifr_addr, sizeof(struct sockaddr_in));
+        } else if (family == AF_INET6) {
+            struct sockaddr_in6 *sin = (struct sockaddr_in6 *)ssb;
+            memcpy(sin, &ifr.ifr_addr, sizeof(struct sockaddr_in6));
+        }
+
+        ifa_broadaddr = reinterpret_cast<sockaddr*>(ssb);
+
         return true;
     }
 

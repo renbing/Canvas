@@ -24,6 +24,7 @@
 #include "canvas.h"
 #include "timer.h"
 #include "http.h"
+#include "socket.h"
 
 
 #include "js.h"
@@ -172,6 +173,7 @@ bool CV8Context::run(const string &path)
 	globalTpl->Set(String::New("Image"), CImage::exportJS());
 	globalTpl->Set(String::New("CanvasRenderingContext2D"), CCanvasContext::exportJS());
 	globalTpl->Set(String::New("XMLHttpRequest"), CXMLHttpRequest::exportJS());
+	globalTpl->Set(String::New("Socket"), CSocket::exportJS());
 
 	m_ctx = Context::New(0, globalTpl);
 

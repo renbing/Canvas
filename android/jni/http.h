@@ -42,4 +42,3 @@ class CXMLHttpRequest
 		void open(const string &method, const string &url, bool async=true);
 		void send(const string &post);
 };
-

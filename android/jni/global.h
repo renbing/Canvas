@@ -29,7 +29,7 @@
 #include <string>
 
 using namespace v8;
-using namespace std;
+using std::string;
 
 
 static unsigned long computePOT(unsigned long x)

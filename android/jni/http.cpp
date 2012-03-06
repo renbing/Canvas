@@ -103,7 +103,7 @@ JS_CLASS_EXPORT(CXMLHttpRequest, XMLHttpRequest)
 
 static void xmlHttpRequestCallback(Downloader *downloader, void *arg)
 {
-	LOG("http callback");
+	//LOG("http callback");
 	CXMLHttpRequest *request = (CXMLHttpRequest *)arg;
 	request->readyState = DONE;
 	request->status = downloader->status();
@@ -114,7 +114,7 @@ static void xmlHttpRequestCallback(Downloader *downloader, void *arg)
 
 	if( !request->onreadystatechange.IsEmpty() )
 	{
-		LOG("http onreadystatechange callback");
+		//LOG("http onreadystatechange callback");
 		CV8Context::getInstance()->callJSFunction(request->onreadystatechange, 0, 0);
 	}
 

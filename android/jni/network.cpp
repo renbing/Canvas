@@ -128,6 +128,7 @@ bool Downloader::start()
 	{
 		pthread_t tid;
 		pthread_create(&tid, NULL, download, (void *)this);
+		pthread_detach(tid);
 	}
 	else
 	{

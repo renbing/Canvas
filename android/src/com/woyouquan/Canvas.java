@@ -4,12 +4,14 @@ import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Context;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.opengl.GLSurfaceView;
 import android.os.Bundle;
+import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.Window;
 import android.view.WindowManager;
@@ -62,6 +64,8 @@ public class Canvas extends Activity {
     {
     	super.onDestroy();
     	nativeDone();
+    	
+    	android.os.Process.killProcess(android.os.Process.myPid());
     }
     
 	@Override
@@ -75,6 +79,16 @@ public class Canvas extends Activity {
 		super.onResume();
 		mGLView.onResume();
 	}
+	@Override
+	public boolean onKeyDown(int keyCode, KeyEvent event) {
+		if( keyCode == KeyEvent.KEYCODE_BACK )
+		{
+			onDestroy();
+			return true;
+		}
+		return super.onKeyDown(keyCode, event);
+	}
+	
     //private native String stringFromJNI();
     private native void nativeInit(String apkPath);
     private native void nativeDone();

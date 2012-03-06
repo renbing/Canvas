@@ -91,7 +91,7 @@ int getifaddrs(ifaddrs** result) {
                             int family = address->ifa_family;
                             if (family == AF_INET || family == AF_INET6) {
                                 *result = new ifaddrs(*result);
-                                if (!(*result)->setNameAndFlagsByIndex(address->ifa_index)) {
+                                if (!(*result)->setNameAndFlagsByIndex(address->ifa_index, family)) {
                                     return -1;
                                 }
                                 (*result)->setAddress(family, RTA_DATA(rta), RTA_PAYLOAD(rta));

@@ -74,6 +74,8 @@ void Java_com_woyouquan_Canvas_nativeInit( JNIEnv *env, jclass cls, jstring apkP
 		LOG("Loading APK failed");
 	}
 
+	test();
+
 	LOG("canvas init");
 }
 
@@ -87,7 +89,7 @@ void Java_com_woyouquan_Canvas_nativeDone( JNIEnv *env )
 	}
 
 	CTimer::getInstance()->clean();
-	//CV8Context::getInstance()->clean();
+	CV8Context::getInstance()->clean();
 
 	curl_global_cleanup();
 	
