@@ -18,47 +18,60 @@
 #pragma once
 
 #include <stdlib.h>
+#include <curl/curl.h>
+
 #include <vector>
 #include <string>
+#include <map>
 
 using std::string;
 using std::vector;
+using std::map;
 
 class Downloader;
 
 typedef void (*DownloadCallback)(Downloader *, void *);
 typedef enum{ EMPTY, PREPARED, RUNNING, COMPLETE} DOWNLOAD_STATE;
+
 class Downloader
 {
 	private:
 		void *m_buf;
 		size_t m_bufSize;
 		size_t m_recievedLen;
+
 		int m_status;
+		CURL *m_curl;
 
 		DOWNLOAD_STATE m_state;
 
-	public:
-		DownloadCallback callback;
-		void *callbackArg;
-		bool callbackImmediately;
+		DownloadCallback m_callback;
+		void *m_callbackArg;
+		bool m_callbackImmediately;
 		
-		bool async;
-		string url;
-		string post;
-		string headers;
+		bool m_async;
+		string m_url;
+		bool m_post;
+		string m_postData;
+		struct curl_slist *m_headers;
+	
+	private:
+		void init();
 
 	public:
 		void didReceiveResponse(int status);
 		void didReceiveData(void *data, size_t len);
 		void didFinishLoading();
+		void performDownload();
 
 	public:
 		Downloader();
-		Downloader(const string *url, bool async = false, bool callbackImmediately = true, DownloadCallback callback = NULL, 
-						void *callbackArg = NULL, const string *post = NULL, const string *headers = NULL);
+		Downloader(const string *url, bool post = false, const string *postData = NULL, bool async = false, bool callbackImmediately = true, 
+					DownloadCallback callback = NULL, void *callbackArg = NULL, const map<string, string> *headers = NULL);
 		~Downloader();
-		
+
+		void downloadURL(const string *url, bool post = false , const string *postData = NULL, bool async = false, bool callbackImmediately = true, 
+					DownloadCallback callback = NULL, void *callbackArg = NULL, const map<string, string> *headers = NULL);
 		bool start();
 		const void * receivedData();
 		size_t receivedDataLength();
@@ -89,6 +102,6 @@ class AsyncDownloadQueue
 	public:
 		static AsyncDownloadQueue * getInstance();
 		void checkComplete();	
-		void downloadURL(const string *url, DownloadCallback callback = NULL, 
-						void *callbackArg = NULL, const string *post = NULL, const string *headers = NULL);
+		void downloadURL(const string *url, bool post = false, const string *postData = NULL, DownloadCallback callback = NULL, 
+						void *callbackArg = NULL, const map<string, string> *headers = NULL);
 };

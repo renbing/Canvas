@@ -26,7 +26,6 @@
 // CURL 下载数据写入
 static int writer(void *data, size_t size, size_t nmemb, Downloader *downloader)
 {
-	
 	//LOG("download writer\n");
 	if( downloader )
 	{
@@ -40,43 +39,38 @@ static int writer(void *data, size_t size, size_t nmemb, Downloader *downloader)
 static void * download(void *arg)
 {
 	//LOG("downloading...\n");
-
 	Downloader *downloader = (Downloader *)arg;
-
-	CURL *curl = curl_easy_init();
-
-	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, writer);
-	curl_easy_setopt(curl, CURLOPT_URL, downloader->url.c_str());
-
-	//curl_easy_setopt(curl, CURLOPT_NOSIGNAL, 1L);
-	//curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
-	curl_easy_setopt(curl, CURLOPT_FORBID_REUSE, 1L);
-
-	long repCode = -1;
-	CURLcode res = CURLE_OK;
-
-	curl_easy_setopt(curl, CURLOPT_WRITEDATA, downloader);
-	res = curl_easy_perform(curl);
-	if ( CURLE_OK == res )
-	{
-		curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &repCode);
-
-		//char buf[8];
-		//curl_easy_getinfo(m_curl,CURLINFO_CONTENT_TYPE,&buf);
-	}
-
-	curl_easy_cleanup(curl);
-	downloader->didReceiveResponse(repCode);
-	downloader->didFinishLoading();
+	downloader->performDownload();
 
 	return NULL;
 }
 
 Downloader::~Downloader()
 {
+	if( m_headers != NULL )
+	{
+		curl_slist_free_all(m_headers);
+	}
+
+	curl_easy_cleanup(m_curl);
 	free(m_buf);
 }
+
 Downloader::Downloader()
+{
+	init();
+}
+
+Downloader::Downloader(const string *url, bool post, const string *postData, bool async, bool callbackImmediately, DownloadCallback callback, 
+							void *callbackArg, const map<string, string> *headers)
+{
+	init();
+
+	downloadURL(url, post, postData, async, callbackImmediately, callback, callbackArg, headers);
+
+}
+
+void Downloader::init()
 {
 	m_status = -1;
 	m_bufSize = 1024 * 100;
@@ -84,37 +78,48 @@ Downloader::Downloader()
 	m_recievedLen = 0;
 	m_state = EMPTY;
 	
-	async = false;
-	callback = NULL;
-	callbackArg = NULL;
-	callbackImmediately = true;
+	m_post = false;
+	m_async = false;
+	m_callback = NULL;
+	m_callbackArg = NULL;
+	m_callbackImmediately = true;
+
+	m_headers = NULL;
+	m_curl = curl_easy_init();
 }
 
-Downloader::Downloader(const string *url, bool async, bool callbackImmediately, DownloadCallback callback, void *callbackArg, const string *post, const string *headers)
+void Downloader::downloadURL(const string *url, bool post, const string *postData, bool async, bool callbackImmediately, DownloadCallback callback, 
+							void *callbackArg, const map<string, string> *headers)
 {
-	m_status = -1;
-	m_bufSize = 1024 * 100;
-	m_buf = malloc(m_bufSize);
-	m_recievedLen = 0;
-	m_state = PREPARED;
-	
-	this->async = async;
-	this->callback = callback;
-	this->callbackArg = callbackArg;
-	this->callbackImmediately = callbackImmediately;
+	if( m_state != EMPTY )
+	{
+		return;
+	}
+
+	m_post = post;
+	m_async = async;
+	m_callback = callback;
+	m_callbackArg = callbackArg;
+	m_callbackImmediately = callbackImmediately;
 
 	if( url )
 	{
-		this->url = *url;
+		m_url = *url;
 	}
-	if( post )
+	if( postData )
 	{
-		this->post = *post;
+		m_postData = *postData;
 	}
 	if( headers )
 	{
-		this->headers = *headers;
+		for( map<string,string>::const_iterator it=headers->begin(); it != headers->end(); it++ )
+		{
+			string header = it->first + ": " + it->second;
+			m_headers = curl_slist_append(m_headers, header.c_str());
+		}
 	}
+
+	m_state = PREPARED;
 }
 
 bool Downloader::start()
@@ -124,7 +129,24 @@ bool Downloader::start()
 		return false;
 	}
 
-	if( async )
+	curl_easy_setopt(m_curl, CURLOPT_WRITEFUNCTION, writer);
+	curl_easy_setopt(m_curl, CURLOPT_URL, m_url.c_str());
+
+	//curl_easy_setopt(m_curl, CURLOPT_NOSIGNAL, 1L);
+	//curl_easy_setopt(m_curl, CURLOPT_VERBOSE, 1L);
+
+	curl_easy_setopt(m_curl, CURLOPT_FORBID_REUSE, 1);
+	curl_easy_setopt(m_curl, CURLOPT_WRITEDATA, this);
+	
+	if( m_post )
+	{
+		curl_easy_setopt(m_curl,CURLOPT_POST, 1);
+		curl_easy_setopt(m_curl,CURLOPT_POSTFIELDS, m_postData.c_str());
+	}
+	
+	curl_easy_setopt(m_curl, CURLOPT_HTTPHEADER, m_headers);
+
+	if( m_async )
 	{
 		pthread_t tid;
 		pthread_create(&tid, NULL, download, (void *)this);
@@ -138,6 +160,24 @@ bool Downloader::start()
 	m_state = RUNNING;
 
 	return true;
+}
+
+void Downloader::performDownload()
+{
+	long repCode = -1;
+	CURLcode res = CURLE_OK;
+
+	res = curl_easy_perform(m_curl);
+	if ( CURLE_OK == res )
+	{
+		curl_easy_getinfo(m_curl, CURLINFO_RESPONSE_CODE, &repCode);
+
+		//char buf[8];
+		//curl_easy_getinfo(m_curl, CURLINFO_CONTENT_TYPE, &buf);
+	}
+
+	didReceiveResponse(repCode);
+	didFinishLoading();
 }
 
 void Downloader::didReceiveData(void *data, size_t len)
@@ -168,7 +208,7 @@ void Downloader::didFinishLoading()
 {
 	m_state = COMPLETE;
 
-	if( callbackImmediately )
+	if( m_callbackImmediately )
 	{
 		invokeCallback();
 	}
@@ -176,9 +216,9 @@ void Downloader::didFinishLoading()
 
 void Downloader::invokeCallback()
 {
-	if( callback )
+	if( m_callback )
 	{
-		callback(this, callbackArg);
+		m_callback(this, m_callbackArg);
 	}
 }
 
@@ -222,9 +262,10 @@ AsyncDownloadQueue * AsyncDownloadQueue::getInstance()
 	return m_instance;
 }
 
-void AsyncDownloadQueue::downloadURL(const string *url, DownloadCallback callback, void *callbackArg, const string *post, const string *headers)
+void AsyncDownloadQueue::downloadURL(const string *url, bool post, const string *postData, DownloadCallback callback, 
+									void *callbackArg, const map<string, string> *headers)
 {
-	Downloader *downloader = new Downloader(url, true, false, callback, callbackArg, post, headers);
+	Downloader *downloader = new Downloader(url, post, postData, true, false, callback, callbackArg, headers);
 	m_downloaders.push_back(downloader);
 }
 

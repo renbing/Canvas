@@ -18,6 +18,8 @@
 #include "global.h"
 #include "network.h"
 #include "js.h"
+#include "stringutil.h"
+#include "urllib.h"
 
 #include "http.h"
 
@@ -80,6 +82,31 @@ static v8::Handle<v8::Value> JS_send( const v8::Arguments& args )
 	return v8::Undefined();
 }
 
+static v8::Handle<v8::Value> JS_setRequestHeader( const v8::Arguments& args )
+{
+	v8::HandleScope handleScope;
+
+	int argc = args.Length();
+
+	v8::Local<v8::Object> self = args.Holder();
+	v8::Local<v8::External> wrap = v8::Local<v8::External>::Cast(self->GetInternalField(0));
+	CXMLHttpRequest *request = static_cast<CXMLHttpRequest *>(wrap->Value());
+
+	if( !request || argc < 2 )
+	{
+		return v8::Undefined();
+	}
+
+	
+	string key,value;
+	key = ValueCast::Cast(key, args[0]);
+	value = ValueCast::Cast(value, args[1]);
+	
+	request->setRequestHeader(key, value);
+
+	return v8::Undefined();
+}
+
 JS_PROPERTY_READONLY(CXMLHttpRequest, Int32, status)
 JS_PROPERTY_READONLY(CXMLHttpRequest, Int32, readyState)
 JS_PROPERTY_READONLY(CXMLHttpRequest, String, responseText)
@@ -96,6 +123,7 @@ static JSStaticValue jsStaticValues[] = {
 static JSStaticFunction jsStaticFunctions[] = {
 	JS_FUNCTION_DEF(open),
 	JS_FUNCTION_DEF(send),
+	JS_FUNCTION_DEF(setRequestHeader),
 	{0, 0}
 };
 
@@ -126,6 +154,7 @@ CXMLHttpRequest::CXMLHttpRequest()
 	readyState = UNSENT;
 	status = -1;
 
+	m_post = false;
 	m_async = true;
 }
 
@@ -135,21 +164,29 @@ CXMLHttpRequest::~CXMLHttpRequest()
 
 void CXMLHttpRequest::open(const string &method, const string &url, bool async)
 {
-	m_method = method;
+	if( StringUtil::upper(method) == "POST" )
+	{
+		m_post = true;
+	}
 	m_url = url;
 	m_async = async;
 }
 
-void CXMLHttpRequest::send(const string &post)
+void CXMLHttpRequest::send(const string &postData)
 {
-	string fullPath = CV8Context::getInstance()->path() + m_url;
+	string fullPath = URLUtil::url2Absolute( CV8Context::getInstance()->path() , m_url );
 	if( m_async )
 	{
-		AsyncDownloadQueue::getInstance()->downloadURL(&fullPath, xmlHttpRequestCallback, this, &post, NULL);
+		AsyncDownloadQueue::getInstance()->downloadURL(&fullPath, m_post, &postData, xmlHttpRequestCallback, this, NULL);
 	}
 	else
 	{
-		Downloader downloader(&fullPath, false, true, xmlHttpRequestCallback, this, &post, NULL);
+		Downloader downloader(&fullPath, m_post, &postData, false, true, xmlHttpRequestCallback, this, NULL);
 		downloader.start();
 	}
+}
+
+void CXMLHttpRequest::setRequestHeader(const string &key, const string &value)
+{
+	m_headers[key] = value;
 }

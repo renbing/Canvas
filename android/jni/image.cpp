@@ -23,6 +23,7 @@
 #include "image.h"
 #include "js.h"
 #include "stringutil.h"
+#include "urllib.h"
 
 #define CC_RGB_PREMULTIPLY_APLHA(vr, vg, vb, va) \
 (unsigned)(((unsigned)((unsigned char)(vr) * ((unsigned char)(va) + 1)) >> 8) | \
@@ -108,12 +109,12 @@ void CImage::set_src(string src)
 {
 	m_src = src;
 
-	string fullPath = CV8Context::getInstance()->path() + m_src;
+	string fullPath = URLUtil::url2Absolute( CV8Context::getInstance()->path() , m_src );
 	//LOG("image src:%s", fullPath.c_str());
 	
 	if( StringUtil::startWith(fullPath, "http://") )
 	{
-		AsyncDownloadQueue::getInstance()->downloadURL(&fullPath, imageLoadedCallback, this);
+		AsyncDownloadQueue::getInstance()->downloadURL(&fullPath, false, NULL, imageLoadedCallback, this);
 	}
 	else
 	{

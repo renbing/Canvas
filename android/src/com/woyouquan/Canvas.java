@@ -99,6 +99,7 @@ public class Canvas extends Activity {
     public void onDestroy()
     {
     	super.onDestroy();
+    	mGLView.onPause();
     	
     	nativeDone();
     	android.os.Process.killProcess(android.os.Process.myPid());

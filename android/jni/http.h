@@ -17,15 +17,22 @@
 
 #pragma once
 
+#include <string>
+#include <map>
+
+using std::string;
+using std::map;
+
 typedef enum{ UNSENT=0, OPENED=1, HEADERS_RECEIVED=2, LOADING=3, DONE=4 } HTTP_STATE;
 
 
 class CXMLHttpRequest
 {
 	private:
-		string m_method;
+		bool m_post;
 		string m_url;
 		bool m_async;
+		map<string, string> m_headers;
 	
 	public:
 		int status;
@@ -40,5 +47,6 @@ class CXMLHttpRequest
 		JS_CLASS_EXPORT_DEF(CXMLHttpRequest)
 
 		void open(const string &method, const string &url, bool async=true);
-		void send(const string &post);
+		void send(const string &postData);
+		void setRequestHeader(const string &key, const string &value);
 };

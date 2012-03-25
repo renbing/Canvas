@@ -56,7 +56,7 @@ static v8::Handle<v8::Value> alert( const v8::Arguments& args )
 		{
 			jstring msg = env->NewStringUTF(s.c_str());
 			env->CallVoidMethod(g_jgl, method, msg);
-			env->DeleteLocalRef(msg);
+			//env->DeleteLocalRef(msg);
 		}
 
 		LOG("alert: %s", s.c_str());
@@ -81,7 +81,7 @@ static v8::Handle<v8::Value> trace( const v8::Arguments& args )
 		{
 			jstring msg = env->NewStringUTF(s.c_str());
 			env->CallVoidMethod(g_jgl, method, msg);
-			env->DeleteLocalRef(msg);
+			//env->DeleteLocalRef(msg);
 		}
 
 		LOG("trace: %s", s.c_str());
@@ -165,11 +165,12 @@ CV8Context::~CV8Context()
 	if( !m_ctx.IsEmpty() )
 	{
 		v8::Context::Scope contextScope(m_ctx);
+		jsMainLoop.Dispose();
 
 		while(!v8::V8::IdleNotification()) {};
-		m_ctx.Dispose();
-		v8::V8::Dispose();
 	}
+	m_ctx.Dispose();
+	v8::V8::Dispose();
 }
 
 CV8Context * CV8Context::getInstance()
@@ -361,7 +362,7 @@ void CV8Context::logException(const v8::TryCatch &tryCatch)
 	{
 		jstring msg = env->NewStringUTF(log.c_str());
 		env->CallVoidMethod(g_jgl, method, msg);
-		env->DeleteLocalRef(msg);
+		//env->DeleteLocalRef(msg);
 	}
 
 	LOG("%s", log.c_str());
