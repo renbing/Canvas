@@ -132,44 +132,6 @@ struct ifaddrs {
         {
             return false;
         }
-        
-        sockaddr_storage* ssn = new sockaddr_storage;
-        ssn->ss_family = family;
-
-        if (family == AF_INET) {
-            struct sockaddr_in *sin = (struct sockaddr_in *)ssn;
-            memcpy(sin, &ifr.ifr_addr, sizeof(struct sockaddr_in));
-        } else if (family == AF_INET6) {
-            struct sockaddr_in6 *sin = (struct sockaddr_in6 *)ssn;
-            memcpy(sin, &ifr.ifr_addr, sizeof(struct sockaddr_in6));
-        }
-
-        ifa_netmask = reinterpret_cast<sockaddr*>(ssn);
-
-        if (ioctl(fd.get(), SIOCGIFBRDADDR, &ifr) < 0)
-        {
-            return false;
-        }
-	
-		/*
-		struct sockaddr_in sin;
-		memcpy(&sin, &ifr.ifr_addr, sizeof(sin));
-		char *mask_get = inet_ntoa(sin.sin_addr);
-		LOG("mask:%s\n", mask_get);
-		*/
-        
-        sockaddr_storage *ssb = new sockaddr_storage;
-        ssb->ss_family = family;
-
-        if (family == AF_INET) {
-            struct sockaddr_in *sin = (struct sockaddr_in *)ssb;
-            memcpy(sin, &ifr.ifr_addr, sizeof(struct sockaddr_in));
-        } else if (family == AF_INET6) {
-            struct sockaddr_in6 *sin = (struct sockaddr_in6 *)ssb;
-            memcpy(sin, &ifr.ifr_addr, sizeof(struct sockaddr_in6));
-        }
-
-        ifa_broadaddr = reinterpret_cast<sockaddr*>(ssb);
 
         return true;
     }
@@ -178,17 +140,55 @@ struct ifaddrs {
     // sockaddr_in or sockaddr_in6 bytes as the payload. We need to
     // stitch the two bits together into the sockaddr that's part of
     // our portable interface.
-    void setAddress(int family, void* data, size_t byteCount) {
+    void setAddress(int family, void* data, size_t byteCount, size_t prefixlen) {
         sockaddr_storage* ss = new sockaddr_storage;
         ss->ss_family = family;
+		void *dst;
         if (family == AF_INET) {
-            void* dst = &reinterpret_cast<sockaddr_in*>(ss)->sin_addr;
-            memcpy(dst, data, byteCount);
+            dst = &reinterpret_cast<sockaddr_in*>(ss)->sin_addr;
         } else if (family == AF_INET6) {
-            void* dst = &reinterpret_cast<sockaddr_in6*>(ss)->sin6_addr;
-            memcpy(dst, data, byteCount);
+            dst = &reinterpret_cast<sockaddr_in6*>(ss)->sin6_addr;
         }
+		else {
+			return;
+		}
+        memcpy(dst, data, byteCount);
         ifa_addr = reinterpret_cast<sockaddr*>(ss);
+
+        ss = new sockaddr_storage;
+        ss->ss_family = family;
+		size_t buflen = 4;
+        if (family == AF_INET) {
+            dst = &reinterpret_cast<sockaddr_in*>(ss)->sin_addr;
+			buflen = 4;
+        } else if (family == AF_INET6) {
+            dst = &reinterpret_cast<sockaddr_in6*>(ss)->sin6_addr;
+			buflen = 16;
+        }
+		else {
+			return;
+		}
+		memset(dst, 0xff, byteCount);
+		memset((char *)dst + (prefixlen/8), 0, (byteCount - prefixlen/8));
+        ifa_netmask = reinterpret_cast<sockaddr*>(ss);
+
+        ss = new sockaddr_storage;
+        ss->ss_family = family;
+        if (family == AF_INET) {
+            dst = &reinterpret_cast<sockaddr_in*>(ss)->sin_addr;
+			buflen = 4;
+        } else if (family == AF_INET6) {
+            dst = &reinterpret_cast<sockaddr_in6*>(ss)->sin6_addr;
+			buflen = 16;
+        }
+		else {
+			return;
+		}
+
+		memset(dst, 0xff, byteCount);
+        memcpy(dst, data, prefixlen/8);
+        ifa_broadaddr = reinterpret_cast<sockaddr*>(ss);
+
     }
     #endif
 };

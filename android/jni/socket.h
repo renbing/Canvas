@@ -25,7 +25,6 @@
 #include <string>
 #include <vector>
 
-using namespace v8;
 using std::string;
 using std::vector;
 
@@ -51,7 +50,7 @@ class CSocket
 		bool onReceivedMessage(const char *msg);
 
 	public:
-		Persistent<Function> onmessage;
+		v8::Persistent<v8::Function> onmessage;
 
 	public:
 

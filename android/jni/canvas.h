@@ -27,9 +27,9 @@ class CCanvas
 	private:
 		CCanvasContext *m_context;
 
-		Persistent<Function> m_eventDown;
-		Persistent<Function> m_eventUp;
-		Persistent<Function> m_eventMove;
+		v8::Persistent<v8::Function> m_eventDown;
+		v8::Persistent<v8::Function> m_eventUp;
+		v8::Persistent<v8::Function> m_eventMove;
 
 		static CCanvas *m_instance;
 
@@ -46,7 +46,7 @@ class CCanvas
 		~CCanvas();
 		static CCanvas * getInstance();
 
-		void addEventListener(string &eventName, Persistent<Function> callback, bool capture = true);
+		void addEventListener(string &eventName, v8::Persistent<v8::Function> callback, bool capture = true);
 		CCanvasContext * getContext2D();
 		void onTouch( TouchAction e, float x, float y);
 };

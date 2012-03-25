@@ -19,6 +19,7 @@
 #include <GLES/glext.h>
 #include <string.h>
 #include <pthread.h>
+#include <jni.h>
 
 #include <png.h>
 #include <zip.h>
@@ -32,22 +33,25 @@
 #include <errno.h>
 #include "ifaddrs.h"
 
+#include <libwebsockets.h>
+
 #include "global.h"
 #include "point.h"
 
 extern zip *apkArchive;
+extern JavaVM *g_jvm;
 
-static Handle<Value> alert( const Arguments& args )
+static v8::Handle<v8::Value> alert( const v8::Arguments& args )
 {
-	HandleScope handleScope;
+	v8::HandleScope handleScope;
 
 	if( args.Length() > 0 )
 	{
-		const char *content = *(String::Utf8Value(args[0]));
+		const char *content = *(v8::String::Utf8Value(args[0]));
 		LOG("alert: %s", content);
 	}
 
-	return Undefined();
+	return v8::Undefined();
 }
 
 // 单元模块测试函数
@@ -97,22 +101,22 @@ void drawTest()
 
 void jsTest()
 {
-	HandleScope handleScope;
-	Handle<ObjectTemplate> globalTpl = ObjectTemplate::New();
+	v8::HandleScope handleScope;
+	v8::Handle<v8::ObjectTemplate> globalTpl = v8::ObjectTemplate::New();
 	
 	// 注册自定义C++函数以及C++类
-	globalTpl->Set(String::New("alert"), FunctionTemplate::New(alert));
-	globalTpl->Set(String::New("Point"), Point::exportJS());
+	globalTpl->Set(v8::String::New("alert"), v8::FunctionTemplate::New(alert));
+	globalTpl->Set(v8::String::New("Point"), Point::exportJS());
 
 	{
-		Persistent<Context> context = Context::New(0, globalTpl);
-		Context::Scope contextScope(context);
+		v8::Persistent<v8::Context> context = v8::Context::New(0, globalTpl);
+		v8::Context::Scope contextScope(context);
 		{
-			Handle<String> source = String::New("var p = new Point(); p.x=100; alert(p.x); p.talk(); p.src='test js string'; alert(p.src);alert('alert'); 'Hello' + ', World!'");
-			Handle<Script> script = Script::Compile(source);
-			Handle<Value> result = script->Run();
+			v8::Handle<v8::String> source = v8::String::New("var p = new Point(); p.x=100; alert(p.x); p.talk(); p.src='test js string'; alert(p.src);alert('alert'); 'Hello' + ', World!'");
+			v8::Handle<v8::Script> script = v8::Script::Compile(source);
+			v8::Handle<v8::Value> result = script->Run();
 
-			String::AsciiValue ascii(result);
+			v8::String::AsciiValue ascii(result);
 			LOG("js: %s", *ascii);
 		}
 
@@ -180,11 +184,12 @@ int testTimerCreate(int msec, bool loop)
 		ts.it_interval.tv_nsec   =   0;
 	}
 
-	if( timer_settime(tid, TIMER_ABSTIME, &ts, &ots) < 0 )
+	if( timer_settime(tid, 0, &ts, &ots) < 0 )
 	{
 		LOG("start timer fail");
 		return   -1;
 	}
+	LOG("timer %d created", timerid);
 
 	return timerid;
 }
@@ -348,4 +353,98 @@ void socketTest()
 	}
 	
 	freeifaddrs(ifap);
+}
+
+static int callback_lws_default(struct libwebsocket_context * ctx,
+					struct libwebsocket *wsi,
+					enum libwebsocket_callback_reasons reason,
+					void *user, void *in, size_t len)
+{
+	switch (reason)
+	{
+		case LWS_CALLBACK_CLOSED:
+		{
+			LOG("connection closed\n");
+			break;
+		}
+			
+		case LWS_CALLBACK_CLIENT_ESTABLISHED:
+		{
+			LOG("connection established\n");
+			break;
+		}
+			
+		case LWS_CALLBACK_CLIENT_RECEIVE:
+		{
+			LOG("receieved: %d %s\n", (int)len, (char *)in);
+			break;
+		}
+
+		case LWS_CALLBACK_CLIENT_WRITEABLE:
+		{
+			break;
+		}
+			
+		default:
+			break;
+	}
+	
+	return 0;
+}
+
+static struct libwebsocket_protocols protocols[] = {
+    { "lws-default-protocol", callback_lws_default, 0},
+    {  NULL, NULL, 0}
+};
+
+void websocketTest()
+{
+	LOG("start websockt test");
+	struct libwebsocket_context *context = libwebsocket_create_context(CONTEXT_PORT_NO_LISTEN, NULL, protocols, 
+							libwebsocket_internal_extensions, NULL, NULL, -1, -1, 0);
+	if( context == NULL ) 
+	{
+		LOG("Creating libwebsocket context failed");
+		return;
+	}
+
+
+	const char *address = "192.168.1.104";
+	unsigned int port = 1234;
+	int use_ssl = 0;
+	const char *path = "/";
+	const char *host = address;
+	const char *origin = address;
+	int ietf_version = -1; // RFC 6455, 0 hybi-00/hixie76
+
+	LOG("websockt connect\n");
+	struct libwebsocket *m_wsi = libwebsocket_client_connect(context, address, port, use_ssl,path, 
+										host, origin, protocols[0].name, ietf_version, NULL);
+
+	LOG("websockt connect finished\n");
+	if (m_wsi == NULL)
+	{
+		LOG("libwebsocket default connect failed\n");
+		return;
+	}
+
+	int i=0;
+	while( i++ < 10 )
+	{
+		int n = libwebsocket_service(context, 10);
+		LOG("libwebsocket_service: %d\n", n);
+		unsigned char buf[LWS_SEND_BUFFER_PRE_PADDING + 4096 + LWS_SEND_BUFFER_POST_PADDING];
+		strcpy((char *)&buf[LWS_SEND_BUFFER_PRE_PADDING], "hello");
+		
+		libwebsocket_write(m_wsi, &buf[LWS_SEND_BUFFER_PRE_PADDING], 5, LWS_WRITE_TEXT);
+		sleep(1);
+	}
+	libwebsocket_close_and_free_session(context, m_wsi, LWS_CLOSE_STATUS_GOINGAWAY);
+	while( i++ < 10 )
+	{
+		libwebsocket_service(context, 10);
+		sleep(1);
+	}
+
+	return;
 }

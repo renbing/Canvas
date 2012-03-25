@@ -28,7 +28,6 @@
 
 #include <string>
 
-using namespace v8;
 using std::string;
 
 
@@ -55,42 +54,49 @@ static void mysleep(int msec)
 // JS 处理相关
 typedef struct {
 	const char * const name;
-	AccessorGetter getter;
-	AccessorSetter setter;
+	v8::AccessorGetter getter;
+	v8::AccessorSetter setter;
 } JSStaticValue;
 
 typedef struct {
 	const char * const name;
-	InvocationCallback callback;
+	v8::InvocationCallback callback;
 } JSStaticFunction;
 
 
 class ValueCast
 {
 	public:
-		static bool Cast(bool &, Handle<Value> value) { return value->BooleanValue(); }
-		static float Cast(float &, Handle<Value> value) { return value->NumberValue(); }
-		static int Cast(int &, Handle<Value> value) { return value->Int32Value(); }
-		static unsigned int Cast(unsigned int &, Handle<Value> value) { return value->Uint32Value(); }
-		static unsigned long Cast(unsigned long &, Handle<Value> value) { return value->Uint32Value(); }
-		static string Cast(string &, Handle<Value> value) { return string(*(String::Utf8Value(value))); }
-		static Persistent<Function> Cast(Handle<Function>, Handle<Value> value) { return Persistent<Function>::New( Handle<Function>::Cast(value) ); };
+		static bool Cast(bool &, v8::Handle<v8::Value> value) { return value->BooleanValue(); }
+		static float Cast(float &, v8::Handle<v8::Value> value) { return value->NumberValue(); }
+		static int Cast(int &, v8::Handle<v8::Value> value) { return value->Int32Value(); }
+		static unsigned int Cast(unsigned int &, v8::Handle<v8::Value> value) { return value->Uint32Value(); }
+		static unsigned long Cast(unsigned long &, v8::Handle<v8::Value> value) { return value->Uint32Value(); }
+		static string Cast(string &, v8::Handle<v8::Value> value) { return string(*(v8::String::Utf8Value(value))); }
+		static v8::Persistent<v8::Function> Cast(v8::Handle<v8::Function>, v8::Handle<v8::Value> value) 
+		{ 
+			return v8::Persistent<v8::Function>::New( v8::Handle<v8::Function>::Cast(value) ); 
+		};
 
-		static Handle<Value> New(bool &value) { return Boolean::New(value); }
-		static Handle<Value> New(float &value) { return Number::New(value); }
-		static Handle<Value> New(int &value) { return Integer::New(value); }
-		static Handle<Value> New(unsigned int &value) { return Integer::NewFromUnsigned(value); }
-		static Handle<Value> New(unsigned long &value) { return Integer::NewFromUnsigned(value); }
-		static Handle<Value> New(string &value) { return String::New(value.c_str()); }
-		static Handle<Value> New(Handle<Function> &value) { return value; }
+		static v8::Handle<v8::Value> New(bool &value) { return v8::Boolean::New(value); }
+		static v8::Handle<v8::Value> New(float &value) { return v8::Number::New(value); }
+		static v8::Handle<v8::Value> New(int &value) { return v8::Integer::New(value); }
+		static v8::Handle<v8::Value> New(unsigned int &value) { return v8::Integer::NewFromUnsigned(value); }
+		static v8::Handle<v8::Value> New(unsigned long &value) { return v8::Integer::NewFromUnsigned(value); }
+		static v8::Handle<v8::Value> New(string &value) { return v8::String::New(value.c_str()); }
+		static v8::Handle<v8::Value> New(v8::Handle<v8::Function> &value) { return value; }
 };
 
-static Handle<FunctionTemplate> createJSFunctionTemplate( InvocationCallback jsConstructor, JSStaticValue jsStaticValues[], int propertyCount, JSStaticFunction jsStaticFunctions[], int funcCount )
+static v8::Handle<v8::FunctionTemplate> createJSFunctionTemplate( v8::InvocationCallback jsConstructor, 
+																JSStaticValue jsStaticValues[], 
+																int propertyCount, 
+																JSStaticFunction jsStaticFunctions[], 
+																int funcCount )
 {
-	HandleScope handleScope;
+	v8::HandleScope handleScope;
 
-	Handle<FunctionTemplate> funcTpl = FunctionTemplate::New(jsConstructor);
-	Handle<ObjectTemplate> funcProto = funcTpl->PrototypeTemplate();
+	v8::Handle<v8::FunctionTemplate> funcTpl = v8::FunctionTemplate::New(jsConstructor);
+	v8::Handle<v8::ObjectTemplate> funcProto = funcTpl->PrototypeTemplate();
 	
 	for( int i=0; i<funcCount; i++ )
 	{
@@ -99,10 +105,10 @@ static Handle<FunctionTemplate> createJSFunctionTemplate( InvocationCallback jsC
 		{
 			break;
 		}
-		funcProto->Set(String::New(define.name), FunctionTemplate::New(define.callback));
+		funcProto->Set(v8::String::New(define.name), v8::FunctionTemplate::New(define.callback));
 	}
 
-	Handle<ObjectTemplate> funcIns = funcTpl->InstanceTemplate();
+	v8::Handle<v8::ObjectTemplate> funcIns = funcTpl->InstanceTemplate();
 	funcIns->SetInternalFieldCount(1);
 
 	for( int i=0; i<propertyCount; i++ )
@@ -112,17 +118,20 @@ static Handle<FunctionTemplate> createJSFunctionTemplate( InvocationCallback jsC
 		{
 			break;
 		}
-		funcIns->SetAccessor(String::New(define.name), define.getter, define.setter);
+		funcIns->SetAccessor(v8::String::New(define.name), define.getter, define.setter);
 	}
 
 	return handleScope.Close(funcTpl);
 }
 
-static Handle<ObjectTemplate> createJSObjectTemplate(JSStaticValue jsStaticValues[], int propertyCount, JSStaticFunction jsStaticFunctions[], int funcCount )
+static v8::Handle<v8::ObjectTemplate> createJSObjectTemplate(JSStaticValue jsStaticValues[], 
+															int propertyCount, 
+															JSStaticFunction jsStaticFunctions[], 
+															int funcCount )
 {
-	HandleScope handleScope;
+	v8::HandleScope handleScope;
 
-	Handle<ObjectTemplate> objTpl = ObjectTemplate::New();
+	v8::Handle<v8::ObjectTemplate> objTpl = v8::ObjectTemplate::New();
 	objTpl->SetInternalFieldCount(1);
 
 	for( int i=0; i<funcCount; i++ )
@@ -132,7 +141,7 @@ static Handle<ObjectTemplate> createJSObjectTemplate(JSStaticValue jsStaticValue
 		{
 			break;
 		}
-		objTpl->Set(String::New(define.name), FunctionTemplate::New(define.callback));
+		objTpl->Set(v8::String::New(define.name), v8::FunctionTemplate::New(define.callback));
 	}
 
 	for( int i=0; i<propertyCount; i++ )
@@ -142,14 +151,14 @@ static Handle<ObjectTemplate> createJSObjectTemplate(JSStaticValue jsStaticValue
 		{
 			break;
 		}
-		objTpl->SetAccessor(String::New(define.name), define.getter, define.setter);
+		objTpl->SetAccessor(v8::String::New(define.name), define.getter, define.setter);
 	}
 
 	return handleScope.Close(objTpl);
 }
 
 template<class T>
-void jsDestructor(Persistent<Value> self, void *parameter)
+void jsDestructor(v8::Persistent<v8::Value> self, void *parameter)
 {
 	LOG("jsDestructor called");
 	delete static_cast<T *>(parameter);
@@ -157,33 +166,33 @@ void jsDestructor(Persistent<Value> self, void *parameter)
 }
 
 template<class T>
-inline Handle<Value> jsConstructor( const Arguments& args )
+inline v8::Handle<v8::Value> jsConstructor( const v8::Arguments& args )
 {
-	HandleScope handleScope;
+	v8::HandleScope handleScope;
 
 	if( args.IsConstructCall() )
 	{
 		T *obj = new T;
 
-		Persistent<Object> self = Persistent<Object>::New(args.Holder());
+		v8::Persistent<v8::Object> self = v8::Persistent<v8::Object>::New(args.Holder());
 		self.MakeWeak(obj, jsDestructor<T>);
-		self->SetInternalField(0, External::New(obj));
+		self->SetInternalField(0, v8::External::New(obj));
 
 		return handleScope.Close(self);
 	}
 
-	return Undefined();
+	return v8::Undefined();
 }
 
 template<class T>
-inline T * getCObjct(Handle<Object> obj)
+inline T * getCObjct( v8::Handle<v8::Object> obj )
 {
 	if( obj.IsEmpty() )
 	{
 		return NULL;
 	}
 
-	Local<External> wrap = Local<External>::Cast(obj->GetInternalField(0));
+	v8::Local<v8::External> wrap = v8::Local<v8::External>::Cast(obj->GetInternalField(0));
 	if( wrap.IsEmpty() )
 	{
 		return NULL;
@@ -195,46 +204,46 @@ inline T * getCObjct(Handle<Object> obj)
 }
 
 #define JS_PROPERTY_READONLY(className, varType, varName)\
-static Handle<Value> JS_get##varName(Local<String> property, const AccessorInfo &info) \
+static v8::Handle<v8::Value> JS_get##varName( v8::Local<v8::String> property, const v8::AccessorInfo &info ) \
 {\
-	HandleScope handleScope;\
+	v8::HandleScope handleScope;\
 \
-	Local<Object> self = info.Holder();\
-	Local<External> wrap = Local<External>::Cast(self->GetInternalField(0));\
+	v8::Local<v8::Object> self = info.Holder();\
+	v8::Local<v8::External> wrap = v8::Local<v8::External>::Cast(self->GetInternalField(0));\
 \
 	return handleScope.Close(ValueCast::New(static_cast<className *>(wrap->Value())->varName));\
 }
 
 #define JS_PROPERTY_WRITE(className, varType, varName)\
-static void JS_set##varName(Local<String> property, Local<Value> value, const AccessorInfo &info)\
+static void JS_set##varName( v8::Local<v8::String> property, v8::Local<v8::Value> value, const v8::AccessorInfo &info )\
 {\
-	HandleScope handleScope;\
+	v8::HandleScope handleScope;\
 \
-	Local<Object> self = info.Holder();\
-	Local<External> wrap = Local<External>::Cast(self->GetInternalField(0));\
+	v8::Local<v8::Object> self = info.Holder();\
+	v8::Local<v8::External> wrap = v8::Local<v8::External>::Cast(self->GetInternalField(0));\
 \
 	className *obj = static_cast<className *>(wrap->Value());\
 	obj->varName = ValueCast::Cast(obj->varName, value);\
 }
 
 #define JS_PROPERTY_READONLY_BYFUNC(className, varType, varName)\
-static Handle<Value> JS_get##varName(Local<String> property, const AccessorInfo &info) \
+static v8::Handle<v8::Value> JS_get##varName( v8::Local<v8::String> property, const v8::AccessorInfo &info ) \
 {\
-	HandleScope handleScope;\
+	v8::HandleScope handleScope;\
 \
-	Local<Object> self = info.Holder();\
-	Local<External> wrap = Local<External>::Cast(self->GetInternalField(0));\
+	v8::Local<v8::Object> self = info.Holder();\
+	v8::Local<v8::External> wrap = v8::Local<v8::External>::Cast(self->GetInternalField(0));\
 \
 	return handleScope.Close(ValueCast::New(static_cast<className *>(wrap->Value())->get_##varName()));\
 }
 
 #define JS_PROPERTY_WRITE_BYFUNC(className, varType, varName)\
-static void JS_set##varName(Local<String> property, Local<Value> value, const AccessorInfo &info)\
+static void JS_set##varName( v8::Local<v8::String> property, v8::Local<v8::Value> value, const v8::AccessorInfo &info )\
 {\
-	HandleScope handleScope;\
+	v8::HandleScope handleScope;\
 \
-	Local<Object> self = info.Holder();\
-	Local<External> wrap = Local<External>::Cast(self->GetInternalField(0));\
+	v8::Local<v8::Object> self = info.Holder();\
+	v8::Local<v8::External> wrap = v8::Local<v8::External>::Cast(self->GetInternalField(0));\
 \
 	className *obj = static_cast<className *>(wrap->Value());\
 	obj->set_##varName( ValueCast::Cast(obj->get_##varName(), value) );\
@@ -251,16 +260,16 @@ JS_PROPERTY_READONLY_BYFUNC(className, varType, varName)\
 JS_PROPERTY_WRITE_BYFUNC(className, varType, varName)\
 
 #define JS_SIMPLE_FUNCTION(className, funcName)\
-static Handle<Value> JS_##funcName( const Arguments& args )\
+static v8::Handle<v8::Value> JS_##funcName( const v8::Arguments& args )\
 {\
-	HandleScope handleScope;\
+	v8::HandleScope handleScope;\
 \
-	Local<Object> self = args.Holder();\
-	Local<External> wrap = Local<External>::Cast(self->GetInternalField(0));\
+	v8::Local<v8::Object> self = args.Holder();\
+	v8::Local<v8::External> wrap = v8::Local<v8::External>::Cast(self->GetInternalField(0));\
 \
 	static_cast<className *>(wrap->Value())->funcName();\
 \
-	return Undefined();\
+	return v8::Undefined();\
 }
 
 #define JS_PROPERTY_READONLY_DEF(varName)\
@@ -273,13 +282,13 @@ static Handle<Value> JS_##funcName( const Arguments& args )\
 {#funcName, JS_##funcName}
 
 #define JS_CLASS_EXPORT_DEF(className) \
-static Handle<FunctionTemplate> exportJS();\
-static Handle<Object> newJSObject(className *cobj);
+static v8::Handle<v8::FunctionTemplate> exportJS();\
+static v8::Handle<v8::Object> newJSObject(className *cobj);
 
 #define JS_CLASS_EXPORT(className, JSClassName)\
-Handle<FunctionTemplate> className::exportJS()\
+v8::Handle<v8::FunctionTemplate> className::exportJS()\
 {\
-	HandleScope handleScope;\
+	v8::HandleScope handleScope;\
 \
 	int funcCount = sizeof(jsStaticFunctions)/sizeof(JSStaticFunction);\
 	int propertyCount = sizeof(jsStaticValues)/sizeof(JSStaticValue);\
@@ -287,31 +296,32 @@ Handle<FunctionTemplate> className::exportJS()\
 \
 	return handleScope.Close(createJSFunctionTemplate(jsConstructor<className>, jsStaticValues, propertyCount, jsStaticFunctions, funcCount));\
 }\
-Handle<Object> className::newJSObject(className *cobj)\
-{\
-	HandleScope handleScope;\
 \
-	Handle<FunctionTemplate> tpl = className::exportJS();\
-	Local<Object> obj = tpl->GetFunction()->NewInstance();\
-	obj->SetInternalField(0, External::New(cobj));\
+v8::Handle<v8::Object> className::newJSObject(className *cobj)\
+{\
+	v8::HandleScope handleScope;\
+\
+	v8::Handle<v8::FunctionTemplate> tpl = className::exportJS();\
+	v8::Local<v8::Object> obj = tpl->GetFunction()->NewInstance();\
+	obj->SetInternalField(0, v8::External::New(cobj));\
 \
 	return handleScope.Close(obj);\
 }
 
 #define JS_OBJECT_EXPORT_DEF \
-static Handle<Object> getJSObject();
+static v8::Handle<v8::Object> getJSObject();
 
 #define JS_OBJECT_EXPORT(className)\
-Handle<Object> className::getJSObject()\
+v8::Handle<v8::Object> className::getJSObject()\
 {\
-	HandleScope handleScope;\
+	v8::HandleScope handleScope;\
 \
 	int funcCount = sizeof(jsStaticFunctions)/sizeof(JSStaticFunction);\
 	int propertyCount = sizeof(jsStaticValues)/sizeof(JSStaticValue);\
 	LOG("exportObject: %s funcCount=%d propertyCount=%d", #className, funcCount, propertyCount);\
 \
-	Local<Object> obj = createJSObjectTemplate(jsStaticValues, propertyCount, jsStaticFunctions, funcCount)->NewInstance();\
-	obj->SetInternalField(0, External::New(className::getInstance()));\
+	v8::Local<v8::Object> obj = createJSObjectTemplate(jsStaticValues, propertyCount, jsStaticFunctions, funcCount)->NewInstance();\
+	obj->SetInternalField(0, v8::External::New(className::getInstance()));\
 \
 	return handleScope.Close(obj);\
 }

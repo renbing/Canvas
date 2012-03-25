@@ -86,15 +86,18 @@ int getifaddrs(ifaddrs** result) {
                     ifaddrmsg* address = reinterpret_cast<ifaddrmsg*>(NLMSG_DATA(hdr));
                     rtattr* rta = IFA_RTA(address);
                     size_t ifaPayloadLength = IFA_PAYLOAD(hdr);
-                    while (RTA_OK(rta, ifaPayloadLength)) {
-                        if (rta->rta_type == IFA_LOCAL) {
+                    while (RTA_OK(rta, ifaPayloadLength)) 
+					{
+                        if (rta->rta_type == IFA_LOCAL) 
+						{
                             int family = address->ifa_family;
-                            if (family == AF_INET || family == AF_INET6) {
+                            if (family == AF_INET || family == AF_INET6) 
+							{
                                 *result = new ifaddrs(*result);
                                 if (!(*result)->setNameAndFlagsByIndex(address->ifa_index, family)) {
                                     return -1;
                                 }
-                                (*result)->setAddress(family, RTA_DATA(rta), RTA_PAYLOAD(rta));
+                                (*result)->setAddress(family, RTA_DATA(rta), RTA_PAYLOAD(rta), address->ifa_prefixlen);
                             }
                         }
                         rta = RTA_NEXT(rta, ifaPayloadLength);

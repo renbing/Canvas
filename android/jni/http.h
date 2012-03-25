@@ -17,8 +17,8 @@
 
 #pragma once
 
+typedef enum{ UNSENT=0, OPENED=1, HEADERS_RECEIVED=2, LOADING=3, DONE=4 } HTTP_STATE;
 
-typedef enum{ UNSENT=0, OPENED=1, HEADERS_RECEIVED=2, LOADING=3, DONE=4 }State;
 
 class CXMLHttpRequest
 {
@@ -31,7 +31,7 @@ class CXMLHttpRequest
 		int status;
 		int readyState;
 		string responseText;
-		Persistent<Function> onreadystatechange;
+		v8::Persistent<v8::Function> onreadystatechange;
 
 	public:
 		CXMLHttpRequest();

@@ -34,7 +34,7 @@ class CImage
 
 		GLuint texture;
 
-		Persistent<Function> onload;
+		v8::Persistent<v8::Function> onload;
 
 	private:
 		string m_src;

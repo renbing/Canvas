@@ -21,19 +21,19 @@
 
 #include "http.h"
 
-static Handle<Value> JS_open( const Arguments& args )
+static v8::Handle<v8::Value> JS_open( const v8::Arguments& args )
 {
-	HandleScope handleScope;
+	v8::HandleScope handleScope;
 
 	int argc = args.Length();
 
-	Local<Object> self = args.Holder();
-	Local<External> wrap = Local<External>::Cast(self->GetInternalField(0));
+	v8::Local<v8::Object> self = args.Holder();
+	v8::Local<v8::External> wrap = v8::Local<v8::External>::Cast(self->GetInternalField(0));
 	CXMLHttpRequest *request = static_cast<CXMLHttpRequest *>(wrap->Value());
 
 	if( !request || argc < 2 )
 	{
-		return Undefined();
+		return v8::Undefined();
 	}
 
 	string method;
@@ -50,22 +50,22 @@ static Handle<Value> JS_open( const Arguments& args )
 
 	request->open(method, url, async);
 
-	return Undefined();
+	return v8::Undefined();
 }
 
-static Handle<Value> JS_send( const Arguments& args )
+static v8::Handle<v8::Value> JS_send( const v8::Arguments& args )
 {
-	HandleScope handleScope;
+	v8::HandleScope handleScope;
 
 	int argc = args.Length();
 
-	Local<Object> self = args.Holder();
-	Local<External> wrap = Local<External>::Cast(self->GetInternalField(0));
+	v8::Local<v8::Object> self = args.Holder();
+	v8::Local<v8::External> wrap = v8::Local<v8::External>::Cast(self->GetInternalField(0));
 	CXMLHttpRequest *request = static_cast<CXMLHttpRequest *>(wrap->Value());
 
 	if( !request )
 	{
-		return Undefined();
+		return v8::Undefined();
 	}
 
 	string post;
@@ -77,7 +77,7 @@ static Handle<Value> JS_send( const Arguments& args )
 	
 	request->send(post);
 
-	return Undefined();
+	return v8::Undefined();
 }
 
 JS_PROPERTY_READONLY(CXMLHttpRequest, Int32, status)

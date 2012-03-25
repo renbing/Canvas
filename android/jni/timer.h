@@ -21,14 +21,13 @@
 #include <v8.h>
 #include <vector>
 
-using namespace v8;
 using std::vector;
 
 
 typedef struct
 {
 	timer_t tt;
-	Persistent<Function> callback;
+	v8::Persistent<v8::Function> callback;
 	bool loop;
 
 } CTimerInfo;
@@ -48,7 +47,7 @@ class CTimer
 		~CTimer();
 		static CTimer * getInstance();
 
-		int createTimer(int msec, Persistent<Function> callback, bool loop);
+		int createTimer(int msec, v8::Persistent<v8::Function> callback, bool loop);
 		void clearInterval(int timerid);
 		void update(int timerid);
 		void clean();

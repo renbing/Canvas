@@ -21,9 +21,20 @@
 #include "js.h"
 #include "timer.h"
 
+#define SIGTIMER     (SIGRTMAX)
+
 pthread_mutex_t timer_mutex;
 
-static void timerHandler(sigval_t v)
+static void signalTimerHandler(int signo, siginfo_t * info, void *context)
+{
+	int timerid = info->si_value.sival_int;
+
+	//LOG("update timer %d", timerid);
+
+	CTimer::getInstance()->update(timerid);
+}
+
+static void threadTimerHandler(sigval_t v)
 {
 	int timerid = v.sival_int;
 
@@ -36,6 +47,16 @@ CTimer * CTimer::m_instance = NULL;
 
 CTimer::CTimer()
 {
+	struct sigaction sigact;
+
+	sigemptyset(&sigact.sa_mask);
+	sigact.sa_flags = SA_SIGINFO;
+	sigact.sa_sigaction = signalTimerHandler;
+
+	if (sigaction(SIGTIMER, &sigact, NULL) == -1) 
+	{
+		LOG("sigaction failed");
+	}
 }
 
 CTimer::~CTimer()
@@ -65,7 +86,7 @@ CTimer * CTimer::getInstance()
 	return m_instance;
 }
 
-int CTimer::createTimer(int msec, Persistent<Function> callback, bool loop)
+int CTimer::createTimer(int msec, v8::Persistent<v8::Function> callback, bool loop)
 {
 	
 	CTimerInfo *info = new CTimerInfo;
@@ -83,9 +104,16 @@ int CTimer::createTimer(int msec, Persistent<Function> callback, bool loop)
 	struct itimerspec ts, ots; 
 
 	memset(&se, 0, sizeof(se)); 
-
+	
+	/* 基于线程的timer
 	se.sigev_notify = SIGEV_THREAD;
-	se.sigev_notify_function = timerHandler;
+	se.sigev_notify_function = threadTimerHandler;
+	se.sigev_value.sival_int = timerid; 
+	*/
+	
+	// 基于信号的timer
+	se.sigev_notify = SIGEV_SIGNAL;
+	se.sigev_signo = SIGTIMER;
 	se.sigev_value.sival_int = timerid; 
 
 	if( timer_create(CLOCK_REALTIME, &se, &(info->tt)) < 0 ) 
@@ -108,7 +136,7 @@ int CTimer::createTimer(int msec, Persistent<Function> callback, bool loop)
 		ts.it_interval.tv_nsec   =   0;
 	}
 
-	if( timer_settime(info->tt, TIMER_ABSTIME, &ts, &ots) < 0 )
+	if( timer_settime(info->tt, 0, &ts, &ots) < 0 )
 	{
 		LOG("start timer fail");
 		return -1;
@@ -136,9 +164,9 @@ void CTimer::update(int timerid)
 
 	CTimerInfo *info = m_timers[timerid];
 	
-	Locker locker;
+	v8::Locker locker;
 
-	Persistent<Function> callback = info->callback;
+	v8::Persistent<v8::Function> callback = info->callback;
 	if( callback.IsEmpty() )
 	{
 		return;

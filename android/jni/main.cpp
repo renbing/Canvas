@@ -24,6 +24,7 @@
 #include <png.h>
 #include <zip.h>
 #include <curl/curl.h>
+#include <v8/v8.h>
 
 #include "global.h"
 
@@ -32,6 +33,7 @@
 #include "canvas.h"
 #include "network.h"
 #include "timer.h"
+#include "websocket.h"
 
 // 测试变量
 extern void test();
@@ -44,7 +46,7 @@ zip *apkArchive;
 pthread_mutex_t gl_mutex;
 
 // V8 全局变量
-Persistent<Function> jsMainLoop;
+v8::Persistent<v8::Function> jsMainLoop;
 
 //  暴露给Java的函数接口
 extern "C" {
@@ -54,17 +56,20 @@ extern "C" {
 *	nativeInit(String apkPath)	主程序初始化工作
 *	nativeDone(void)			主程序结束清理工作
 */
+jobject g_jgl = NULL;
+JavaVM *g_jvm = NULL;
+
 jstring Java_com_woyouquan_Canvas_stringFromJNI( JNIEnv *env, jobject obj )
 {
 	return env->NewStringUTF("Hello from NDK !");
 }
 
-void Java_com_woyouquan_Canvas_nativeInit( JNIEnv *env, jclass cls, jstring apkPath )
+void Java_com_woyouquan_Canvas_nativeInit( JNIEnv *env, jobject obj, jstring apkPath )
 {
-	curl_global_init(CURL_GLOBAL_NOTHING);
-
 	const char *strApkPath = env->GetStringUTFChars(apkPath, 0);
 	LOG("apk path: %s", strApkPath);
+
+	curl_global_init(CURL_GLOBAL_NOTHING);
 
 	apkArchive = zip_open(strApkPath, 0, NULL);
 	env->ReleaseStringUTFChars(apkPath, strApkPath);
@@ -92,7 +97,7 @@ void Java_com_woyouquan_Canvas_nativeDone( JNIEnv *env )
 	CV8Context::getInstance()->clean();
 
 	curl_global_cleanup();
-	
+
 	LOG("canvas done");
 }
 
@@ -102,8 +107,11 @@ void Java_com_woyouquan_Canvas_nativeDone( JNIEnv *env )
 *	nativeResize(int width, int height)		OpenGL ES窗口大小改变
 *	nativeRenderer(void)					OpenGL ES逐帧绘图
 */
-void Java_com_woyouquan_EAGLRenderer_nativeInit( JNIEnv *env )
+void Java_com_woyouquan_EAGLRenderer_nativeInit( JNIEnv *env , jobject jgl)
 {
+	env->GetJavaVM(&g_jvm);
+	g_jgl = env->NewGlobalRef(jgl);
+
 	LOG("opengl init");
 }
 
@@ -112,14 +120,16 @@ void Java_com_woyouquan_EAGLRenderer_nativeResize( JNIEnv *env, jobject obj, jin
 	LOG("opengl resize: width=%d height=%d", width, height);
 	CCanvas::getInstance()->width = width;
 	CCanvas::getInstance()->height = height;
-
+	
+	// (0,0) 在左上角,方向右上
 	glViewport(0, 0, width, height);
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 	glOrthof(0, width, -height, 0, -0.01, 100);
+	glScalef(1.0, -1.0, 1.0);
 	glMatrixMode(GL_MODELVIEW);
 
-	glClearColor(1,1,1,1.0);
+	glClearColor(0,0,0,1.0);
 	glColor4f(1,1,1,1);
 
 	glEnable(GL_BLEND);
@@ -128,7 +138,7 @@ void Java_com_woyouquan_EAGLRenderer_nativeResize( JNIEnv *env, jobject obj, jin
 	glDisable(GL_DEPTH_TEST);
 	glDisable(GL_CULL_FACE);
 
-	Locker locker;
+	v8::Locker locker;
 	CV8Context::getInstance()->run(site);
 }
 
@@ -136,28 +146,32 @@ void Java_com_woyouquan_EAGLRenderer_nativeRender( JNIEnv *env )
 {
 	glClear(GL_COLOR_BUFFER_BIT);
 	
-	Locker locker;
+	v8::Locker locker;
 
 	AsyncDownloadQueue::getInstance()->checkComplete();
+	CWebSocket::mainLoop();
+
 	if( !jsMainLoop.IsEmpty() )
 	{
 		CV8Context::getInstance()->callJSFunction(jsMainLoop, 0, 0);
 	}
 
+	CCanvas::getInstance()->getContext2D()->cleanDrawImage();
+
 	//drawTest();
 }
 
-void Java_com_woyouquan_TouchListener_nativeDown( JNIEnv *env, jobject obj, jfloat x, jfloat y )
+void Java_com_woyouquan_EAGLRenderer_nativeDown( JNIEnv *env, jobject obj, jfloat x, jfloat y )
 {
 	CCanvas::getInstance()->onTouch(TOUCH_DOWN, x, y);
 }
 
-void Java_com_woyouquan_TouchListener_nativeMove( JNIEnv *env, jobject obj, jfloat x, jfloat y )
+void Java_com_woyouquan_EAGLRenderer_nativeMove( JNIEnv *env, jobject obj, jfloat x, jfloat y )
 {
 	CCanvas::getInstance()->onTouch(TOUCH_MOVE, x, y);
 }
 
-void Java_com_woyouquan_TouchListener_nativeUp( JNIEnv *env, jobject obj, jfloat x, jfloat y )
+void Java_com_woyouquan_EAGLRenderer_nativeUp( JNIEnv *env, jobject obj, jfloat x, jfloat y )
 {
 	CCanvas::getInstance()->onTouch(TOUCH_UP, x, y);
 }

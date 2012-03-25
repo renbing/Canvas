@@ -23,83 +23,83 @@
 #include "js.h"
 #include "socket.h"
 
-static Handle<Value> JS_runAsServer( const Arguments& args )
+static v8::Handle<v8::Value> JS_runAsServer( const v8::Arguments& args )
 {
-	HandleScope handleScope;
+	v8::HandleScope handleScope;
 
 	int argc = args.Length();
 
-	Local<Object> self = args.Holder();
-	Local<External> wrap = Local<External>::Cast(self->GetInternalField(0));
+	v8::Local<v8::Object> self = args.Holder();
+	v8::Local<v8::External> wrap = v8::Local<v8::External>::Cast(self->GetInternalField(0));
 	CSocket *sock = static_cast<CSocket *>(wrap->Value());
 
 	if( !sock || argc < 1 || !args[0]->IsInt32() )
 	{
-		return handleScope.Close(Boolean::New(false));
+		return handleScope.Close(v8::Boolean::New(false));
 	}
 
 	int broadcastPort = args[0]->Int32Value();
 
-	return handleScope.Close( Boolean::New( sock->runAsServer(broadcastPort) ) );
+	return handleScope.Close( v8::Boolean::New( sock->runAsServer(broadcastPort) ) );
 }
 
-static Handle<Value> JS_runAsClient( const Arguments& args )
+static v8::Handle<v8::Value> JS_runAsClient( const v8::Arguments& args )
 {
-	HandleScope handleScope;
+	v8::HandleScope handleScope;
 
 	int argc = args.Length();
 
-	Local<Object> self = args.Holder();
-	Local<External> wrap = Local<External>::Cast(self->GetInternalField(0));
+	v8::Local<v8::Object> self = args.Holder();
+	v8::Local<v8::External> wrap = v8::Local<v8::External>::Cast(self->GetInternalField(0));
 	CSocket *sock = static_cast<CSocket *>(wrap->Value());
 
 	if( !sock )
 	{
-		return handleScope.Close(Boolean::New(false));
+		return handleScope.Close( v8::Boolean::New(false) );
 	}
 
-	return handleScope.Close( Boolean::New( sock->runAsClient() ) );
+	return handleScope.Close( v8::Boolean::New( sock->runAsClient() ) );
 }
 
-static Handle<Value> JS_init( const Arguments& args )
+static v8::Handle<v8::Value> JS_init( const v8::Arguments& args )
 {
-	HandleScope handleScope;
+	v8::HandleScope handleScope;
 
 	int argc = args.Length();
 
-	Local<Object> self = args.Holder();
-	Local<External> wrap = Local<External>::Cast(self->GetInternalField(0));
+	v8::Local<v8::Object> self = args.Holder();
+	v8::Local<v8::External> wrap = v8::Local<v8::External>::Cast(self->GetInternalField(0));
 	CSocket *sock = static_cast<CSocket *>(wrap->Value());
 
 	if( !sock || argc < 1 || !args[0]->IsInt32() )
 	{
-		return handleScope.Close(Boolean::New(false));
+		return handleScope.Close( v8::Boolean::New(false) );
 	}
 
 	int listenPort = args[0]->Int32Value();
 
-	return handleScope.Close( Boolean::New( sock->init(listenPort) ) );
+	return handleScope.Close( v8::Boolean::New( sock->init(listenPort) ) );
 }
 
-static Handle<Value> JS_send( const Arguments& args )
+static v8::Handle<v8::Value> JS_send( const v8::Arguments& args )
 {
-	HandleScope handleScope;
+	v8::HandleScope handleScope;
 
 	int argc = args.Length();
 
-	Local<Object> self = args.Holder();
-	Local<External> wrap = Local<External>::Cast(self->GetInternalField(0));
+	v8::Local<v8::Object> self = args.Holder();
+	v8::Local<v8::External> wrap = v8::Local<v8::External>::Cast(self->GetInternalField(0));
 	CSocket *sock = static_cast<CSocket *>(wrap->Value());
 
 	if( !sock || argc < 1 )
 	{
-		return handleScope.Close(Boolean::New(false));
+		return handleScope.Close( v8::Boolean::New(false) );
 	}
 
 	string msg;
 	msg = ValueCast::Cast(msg, args[0]);
 
-	return handleScope.Close( Boolean::New( sock->send(msg.c_str()) ) );
+	return handleScope.Close( v8::Boolean::New( sock->send(msg.c_str()) ) );
 }
 
 JS_PROPERTY(CSocket, Function, onmessage)
@@ -486,11 +486,11 @@ bool CSocket::runAsServer(int broadcastPort)
 
 bool CSocket::onReceivedMessage(const char *msg)
 {
-	Locker locker;
+	v8::Locker locker;
 
-	HandleScope handleScope;
+	v8::HandleScope handleScope;
 
-	Context::Scope contextScope(CV8Context::getInstance()->context());
+	v8::Context::Scope contextScope(CV8Context::getInstance()->context());
 
 	if( onmessage.IsEmpty() )
 	{
@@ -499,9 +499,9 @@ bool CSocket::onReceivedMessage(const char *msg)
 
 	int argc = 1;
 
-	Handle<Value> msgValue = String::New(msg);
+	v8::Handle<v8::Value> msgValue = v8::String::New(msg);
 
-	Handle<Value> argv[] = {msgValue};
+	v8::Handle<v8::Value> argv[] = {msgValue};
 
 	return CV8Context::getInstance()->callJSFunction(onmessage, argc, argv);
 }

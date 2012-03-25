@@ -20,7 +20,7 @@
 class CV8Context
 {
 	private:
-		Persistent<Context> m_ctx;
+		v8::Persistent<v8::Context> m_ctx;
 		string m_path;
 		static CV8Context *m_instance;
 
@@ -32,10 +32,11 @@ class CV8Context
 		static CV8Context * getInstance();
 
 		bool run(const string &path);
-		bool callJSFunction(Handle<Function> func, int argc, Handle<Value> argv[]);
+		bool callJSFunction(v8::Handle<v8::Function> func, int argc, v8::Handle<v8::Value> argv[]);
 
 		const string &path();
-		const Persistent<Context> context();
+		const v8::Persistent<v8::Context> context();
 
 		void clean();
+		void logException(const v8::TryCatch &tryCatch);
 };

@@ -20,6 +20,8 @@
 #include "global.h"
 #include "image.h"
 
+#include <vector>
+using std::vector;
 
 class CCanvasContext
 {
@@ -36,7 +38,7 @@ class CCanvasContext
 		void set_fillStyle(string fillStyle);	
 		string & get_fillStyle();
 
-		CCanvasContext() { m_r = m_g = m_b = 0.0; globalAlpha = 1.0; }
+		CCanvasContext() { m_r = m_g = m_b = 0.0; globalAlpha = 1.0; m_image = NULL;}
 
 		void drawImage(CImage *image, float sx, float sy, float sw, float sh, float dx, float dy, float dw, float dh);
 		void drawImageBatch(CImage *image, int count, float *coords);
@@ -52,5 +54,13 @@ class CCanvasContext
 		void rotate(float angle);
 
 		void setTransform(float m11, float m12, float m21, float m22, float dx, float dy);
+	
+	// 绘图缓冲优化
+	private:
+		CImage *m_image;	//上次绘图纹理
+		vector<float> m_coords;
+	public:
+		void drawImageBatch(CImage *image, const vector<float> &coords);
+		void cleanDrawImage();
 };
 

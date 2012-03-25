@@ -30,3 +30,5 @@ void curlTest();
 void curlMutiTest();
 
 void socketTest();
+
+void websocketTest();

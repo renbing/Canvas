@@ -18,44 +18,44 @@
 #include "canvas.h"
 #include "js.h"
 
-static Handle<Value> JS_addEventListener( const Arguments& args )
+static v8::Handle<v8::Value> JS_addEventListener( const v8::Arguments& args )
 {
-	HandleScope handleScope;
+	v8::HandleScope handleScope;
 
 	int argc = args.Length();
 
-	Local<Object> self = args.Holder();
-	Local<External> wrap = Local<External>::Cast(self->GetInternalField(0));
+	v8::Local<v8::Object> self = args.Holder();
+	v8::Local<v8::External> wrap = v8::Local<v8::External>::Cast(self->GetInternalField(0));
 	CCanvas *canvas = static_cast<CCanvas *>(wrap->Value());
 
 	if( !canvas || argc < 2 || !args[0]->IsString() || !args[1]->IsFunction() )
 	{
-		return Undefined();
+		return v8::Undefined();
 	}
 
 	string eventName;
 	eventName = ValueCast::Cast(eventName, args[0]);
 
-	Persistent<Function> callback = Persistent<Function>::New( Local<Function>::Cast(args[1]) );
+	v8::Persistent<v8::Function> callback = v8::Persistent<v8::Function>::New( v8::Local<v8::Function>::Cast(args[1]) );
 
 	canvas->addEventListener(eventName, callback);
 
-	return Undefined();
+	return v8::Undefined();
 }
 
-static Handle<Value> JS_getContext( const Arguments& args )
+static v8::Handle<v8::Value> JS_getContext( const v8::Arguments& args )
 {
-	HandleScope handleScope;
+	v8::HandleScope handleScope;
 
 	int argc = args.Length();
 
-	Local<Object> self = args.Holder();
-	Local<External> wrap = Local<External>::Cast(self->GetInternalField(0));
+	v8::Local<v8::Object> self = args.Holder();
+	v8::Local<v8::External> wrap = v8::Local<v8::External>::Cast(self->GetInternalField(0));
 	CCanvas *canvas = static_cast<CCanvas *>(wrap->Value());
 
 	if( !canvas )
 	{
-		return Undefined();
+		return v8::Undefined();
 	}
 
 	CCanvasContext *context = canvas->getContext2D();
@@ -110,7 +110,7 @@ CCanvas * CCanvas::getInstance()
 	return m_instance;
 }
 
-void CCanvas::addEventListener(string &eventName, Persistent<Function> callback, bool capture)
+void CCanvas::addEventListener(string &eventName, v8::Persistent<v8::Function> callback, bool capture)
 {
 	if( eventName == "mousedown" )
 	{
@@ -136,13 +136,13 @@ CCanvasContext * CCanvas::getContext2D()
 
 void CCanvas::onTouch( TouchAction e, float x, float y)
 {
-	Locker locker;
+	v8::Locker locker;
 
-	HandleScope handleScope;
+	v8::HandleScope handleScope;
 
-	Context::Scope contextScope(CV8Context::getInstance()->context());
+	v8::Context::Scope contextScope(CV8Context::getInstance()->context());
 
-	Persistent<Function> callback;
+	v8::Persistent<v8::Function> callback;
 
 	switch( e )
 	{
@@ -164,17 +164,17 @@ void CCanvas::onTouch( TouchAction e, float x, float y)
 		return;
 	}
 
-	Handle<Object> eventObj = Object::New();
-	eventObj->Set(String::New("pageX"), Number::New(x), ReadOnly);
-	eventObj->Set(String::New("pageY"), Number::New(y), ReadOnly);
-	eventObj->Set(String::New("clientX"), Number::New(x), ReadOnly);
-	eventObj->Set(String::New("clientY"), Number::New(y), ReadOnly);
-	eventObj->Set(String::New("offsetX"), Number::New(x), ReadOnly);
-	eventObj->Set(String::New("offsetY"), Number::New(y), ReadOnly);
-	eventObj->Set(String::New("layerX"), Number::New(x), ReadOnly);
-	eventObj->Set(String::New("layerY"), Number::New(y), ReadOnly);
+	v8::Handle<v8::Object> eventObj = v8::Object::New();
+	eventObj->Set(v8::String::New("pageX"), v8::Number::New(x), v8::ReadOnly);
+	eventObj->Set(v8::String::New("pageY"), v8::Number::New(y), v8::ReadOnly);
+	eventObj->Set(v8::String::New("clientX"), v8::Number::New(x), v8::ReadOnly);
+	eventObj->Set(v8::String::New("clientY"), v8::Number::New(y), v8::ReadOnly);
+	eventObj->Set(v8::String::New("offsetX"), v8::Number::New(x), v8::ReadOnly);
+	eventObj->Set(v8::String::New("offsetY"), v8::Number::New(y), v8::ReadOnly);
+	eventObj->Set(v8::String::New("layerX"), v8::Number::New(x), v8::ReadOnly);
+	eventObj->Set(v8::String::New("layerY"), v8::Number::New(y), v8::ReadOnly);
 
-	Handle<Value> argv[] = {eventObj};
+	v8::Handle<v8::Value> argv[] = {eventObj};
 
 	CV8Context::getInstance()->callJSFunction(callback, 1, argv);
 }
