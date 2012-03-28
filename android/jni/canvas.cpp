@@ -24,9 +24,7 @@ static v8::Handle<v8::Value> JS_addEventListener( const v8::Arguments& args )
 
 	int argc = args.Length();
 
-	v8::Local<v8::Object> self = args.Holder();
-	v8::Local<v8::External> wrap = v8::Local<v8::External>::Cast(self->GetInternalField(0));
-	CCanvas *canvas = static_cast<CCanvas *>(wrap->Value());
+	CCanvas *canvas = jsGetCObject<CCanvas>(args.Holder());
 
 	if( !canvas || argc < 2 || !args[0]->IsString() || !args[1]->IsFunction() )
 	{
@@ -49,9 +47,7 @@ static v8::Handle<v8::Value> JS_getContext( const v8::Arguments& args )
 
 	int argc = args.Length();
 
-	v8::Local<v8::Object> self = args.Holder();
-	v8::Local<v8::External> wrap = v8::Local<v8::External>::Cast(self->GetInternalField(0));
-	CCanvas *canvas = static_cast<CCanvas *>(wrap->Value());
+	CCanvas *canvas = jsGetCObject<CCanvas>(args.Holder());
 
 	if( !canvas )
 	{

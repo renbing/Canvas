@@ -25,19 +25,19 @@ typedef enum {ZIP, RAW} PNGSOURCE;
 
 class CImage
 {
-	public:
-		int width;
-		int height;
-		unsigned long POTWidth;
-		unsigned long POTHeight;
-		bool hasAlpha;
-
-		GLuint texture;
-
-		v8::Persistent<v8::Function> onload;
-
 	private:
+		unsigned int m_width;
+		unsigned int m_height;
+		unsigned long m_POTWidth;
+		unsigned long m_POTHeight;
+		bool m_hasAlpha;
+
+		GLuint m_texture;
+
 		string m_src;
+
+	public:
+		v8::Persistent<v8::Function> onload;
 	
 	public:
 		JS_CLASS_EXPORT_DEF(CImage)
@@ -45,8 +45,16 @@ class CImage
 		CImage();
 		~CImage();
 
+		unsigned int get_width() { return m_width; }		
+		unsigned int get_height() { return m_height; }
+
 		void set_src(string src);
-		string & get_src();
+		const string & get_src() { return m_src; };
+
+		unsigned int POTWidth() { return m_POTWidth; }
+		unsigned int POTHeight() { return m_POTHeight; }
+		bool hasAlpha() { return m_hasAlpha; }
+		GLuint getTexture() { return m_texture; }
 
 		void createTextureWithPngData(PNGSOURCE source, const void *input, png_rw_ptr read_fn);
 };

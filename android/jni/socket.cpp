@@ -29,9 +29,7 @@ static v8::Handle<v8::Value> JS_runAsServer( const v8::Arguments& args )
 
 	int argc = args.Length();
 
-	v8::Local<v8::Object> self = args.Holder();
-	v8::Local<v8::External> wrap = v8::Local<v8::External>::Cast(self->GetInternalField(0));
-	CSocket *sock = static_cast<CSocket *>(wrap->Value());
+	CSocket *sock = jsGetCObject<CSocket>(args.Holder());
 
 	if( !sock || argc < 1 || !args[0]->IsInt32() )
 	{
@@ -49,9 +47,7 @@ static v8::Handle<v8::Value> JS_runAsClient( const v8::Arguments& args )
 
 	int argc = args.Length();
 
-	v8::Local<v8::Object> self = args.Holder();
-	v8::Local<v8::External> wrap = v8::Local<v8::External>::Cast(self->GetInternalField(0));
-	CSocket *sock = static_cast<CSocket *>(wrap->Value());
+	CSocket *sock = jsGetCObject<CSocket>(args.Holder());
 
 	if( !sock )
 	{
@@ -67,9 +63,7 @@ static v8::Handle<v8::Value> JS_init( const v8::Arguments& args )
 
 	int argc = args.Length();
 
-	v8::Local<v8::Object> self = args.Holder();
-	v8::Local<v8::External> wrap = v8::Local<v8::External>::Cast(self->GetInternalField(0));
-	CSocket *sock = static_cast<CSocket *>(wrap->Value());
+	CSocket *sock = jsGetCObject<CSocket>(args.Holder());
 
 	if( !sock || argc < 1 || !args[0]->IsInt32() )
 	{
@@ -87,9 +81,7 @@ static v8::Handle<v8::Value> JS_send( const v8::Arguments& args )
 
 	int argc = args.Length();
 
-	v8::Local<v8::Object> self = args.Holder();
-	v8::Local<v8::External> wrap = v8::Local<v8::External>::Cast(self->GetInternalField(0));
-	CSocket *sock = static_cast<CSocket *>(wrap->Value());
+	CSocket *sock = jsGetCObject<CSocket>(args.Holder());
 
 	if( !sock || argc < 1 )
 	{

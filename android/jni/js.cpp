@@ -20,6 +20,7 @@
 #include "global.h"
 #include "network.h"
 #include "stringutil.h"
+#include "urllib.h"
 
 #include "point.h"
 #include "image.h"
@@ -30,6 +31,7 @@
 #include "socket.h"
 #include "websocket.h"
 #include "audio.h"
+#include "label.h"
 #include "jnihelper.h"
 
 
@@ -214,6 +216,7 @@ bool CV8Context::run(const string &path)
 	globalTpl->Set(v8::String::New("Socket"), CSocket::exportJS());
 	globalTpl->Set(v8::String::New("WebSocket"), CWebSocket::exportJS());
 	globalTpl->Set(v8::String::New("Audio"), CAudio::exportJS());
+	globalTpl->Set(v8::String::New("Label"), CLabel::exportJS());
 
 	m_ctx = v8::Context::New(0, globalTpl);
 
@@ -223,7 +226,7 @@ bool CV8Context::run(const string &path)
 	m_ctx->Global()->Set(v8::String::New("canvas"), CCanvas::getJSObject());
 	
 	do {
-		string indexPath = m_path + "index.js";
+		string indexPath = URLUtil::url2Absolute(m_path, "index.js");
 		string indexContent;
 
 		int status = StringUtil::loadContentsOfURL( indexPath, indexContent );
@@ -249,7 +252,7 @@ bool CV8Context::run(const string &path)
 
 			LOG("js file:%s", jsFileName.c_str());
 			
-			jsFilePath = m_path + jsFileName;
+			jsFilePath = URLUtil::url2Absolute(m_path, jsFileName);
 			status = StringUtil::loadContentsOfURL( jsFilePath, jsContent );
 
 			//jsReadBuf.readZipFile(apkArchive, jsFileName.c_str());

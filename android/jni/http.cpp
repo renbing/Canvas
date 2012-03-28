@@ -29,9 +29,7 @@ static v8::Handle<v8::Value> JS_open( const v8::Arguments& args )
 
 	int argc = args.Length();
 
-	v8::Local<v8::Object> self = args.Holder();
-	v8::Local<v8::External> wrap = v8::Local<v8::External>::Cast(self->GetInternalField(0));
-	CXMLHttpRequest *request = static_cast<CXMLHttpRequest *>(wrap->Value());
+	CXMLHttpRequest *request = jsGetCObject<CXMLHttpRequest>(args.Holder());
 
 	if( !request || argc < 2 )
 	{
@@ -61,9 +59,7 @@ static v8::Handle<v8::Value> JS_send( const v8::Arguments& args )
 
 	int argc = args.Length();
 
-	v8::Local<v8::Object> self = args.Holder();
-	v8::Local<v8::External> wrap = v8::Local<v8::External>::Cast(self->GetInternalField(0));
-	CXMLHttpRequest *request = static_cast<CXMLHttpRequest *>(wrap->Value());
+	CXMLHttpRequest *request = jsGetCObject<CXMLHttpRequest>(args.Holder());
 
 	if( !request )
 	{
@@ -88,9 +84,7 @@ static v8::Handle<v8::Value> JS_setRequestHeader( const v8::Arguments& args )
 
 	int argc = args.Length();
 
-	v8::Local<v8::Object> self = args.Holder();
-	v8::Local<v8::External> wrap = v8::Local<v8::External>::Cast(self->GetInternalField(0));
-	CXMLHttpRequest *request = static_cast<CXMLHttpRequest *>(wrap->Value());
+	CXMLHttpRequest *request = jsGetCObject<CXMLHttpRequest>(args.Holder());
 
 	if( !request || argc < 2 )
 	{

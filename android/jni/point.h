@@ -30,9 +30,9 @@ class Point
 		
 		void talk();
 		void set_src(string src);
-		string& get_src();
+		const string & get_src() { return src; };
 		void set_x(int _x){LOG("set x:%d", _x); x = _x;};
-		int & get_x(){return x;};
+		int get_x(){return x;};
 
 		string src;
 

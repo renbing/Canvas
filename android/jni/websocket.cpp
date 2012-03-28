@@ -65,9 +65,7 @@ static v8::Handle<v8::Value> JS_send( const v8::Arguments& args )
 
 	int argc = args.Length();
 
-	v8::Local<v8::Object> self = args.Holder();
-	v8::Local<v8::External> wrap = v8::Local<v8::External>::Cast(self->GetInternalField(0));
-	CWebSocket *request = static_cast<CWebSocket *>(wrap->Value());
+	CWebSocket *request = jsGetCObject<CWebSocket>(args.Holder());
 
 	if( !request )
 	{

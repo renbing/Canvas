@@ -25,7 +25,8 @@ LOCAL_SRC_FILES := \
 	config.cpp \
 	socket.cpp \
 	urllib.cpp \
-	audio.cpp
+	audio.cpp \
+	label.cpp
 
 LOCAL_C_INCLUDES:= $(NDKROOT)/sources/cxx-stl/stlport/stlport $(LOCAL_PATH)/ $(LOCAL_PATH)/include $(LOCAL_PATH)/include/v8 $(LOCAL_PATH)/include/png
 

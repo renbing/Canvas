@@ -28,18 +28,14 @@ static v8::Handle<v8::Value> JS_drawImage( const v8::Arguments& args )
 
 	int argc = args.Length();
 
-	//v8::Local<v8::Object> self = args.Holder();
-	//v8::Local<v8::External> wrap = v8::Local<v8::External>::Cast(self->GetInternalField(0));
-	//CCanvasContext *context = static_cast<CCanvasContext *>(wrap->Value());
-
-	CCanvasContext *context = getCObjct<CCanvasContext>(args.Holder());
+	CCanvasContext *context = jsGetCObject<CCanvasContext>(args.Holder());
 
 	if( !context || argc < 1 )
 	{
 		return v8::Undefined();
 	}
 
-	CImage *image = getCObjct<CImage>(args[0]->ToObject());
+	CImage *image = jsGetCObject<CImage>(args[0]->ToObject());
 	if( !image )
 	{
 		return v8::Undefined();
@@ -47,12 +43,12 @@ static v8::Handle<v8::Value> JS_drawImage( const v8::Arguments& args )
 
 	float dx = 0;
 	float dy = 0;
-	float dw = image->width;
-	float dh = image->height;
+	float dw = image->get_width();
+	float dh = image->get_height();
 	float sx = 0;
 	float sy = 0;
-	float sw = image->width;
-	float sh = image->height;
+	float sw = image->get_width();
+	float sh = image->get_height();
 
 	if( argc >= 3 )
 	{
@@ -85,15 +81,72 @@ static v8::Handle<v8::Value> JS_drawImage( const v8::Arguments& args )
 	return v8::Undefined();
 }
 
+static v8::Handle<v8::Value> JS_drawLabel( const v8::Arguments& args )
+{
+	v8::HandleScope handleScope;
+
+	int argc = args.Length();
+
+	CCanvasContext *context = jsGetCObject<CCanvasContext>(args.Holder());
+
+	if( !context || argc < 1 )
+	{
+		return v8::Undefined();
+	}
+
+	CLabel *label = jsGetCObject<CLabel>(args[0]->ToObject());
+	if( !label )
+	{
+		return v8::Undefined();
+	}
+
+	float dx = 0;
+	float dy = 0;
+	float dw = label->width;
+	float dh = label->height;
+	float sx = 0;
+	float sy = 0;
+	float sw = label->width;
+	float sh = label->height;
+
+	if( argc >= 3 )
+	{
+		dx = args[1]->NumberValue();
+		dy = args[2]->NumberValue();
+	}
+
+	if( argc >= 5 )
+	{
+		dw = args[3]->NumberValue();
+		dh = args[4]->NumberValue();
+	}
+
+	if( argc >= 9 )
+	{
+		sx = dx;
+		sy = dy;
+		sw = dw;
+		sh = dh;
+
+		dx = args[5]->NumberValue();
+		dy = args[6]->NumberValue();
+		dw = args[7]->NumberValue();
+		dh = args[8]->NumberValue();
+	}
+
+	context->drawLabel(label, sx, sy, sw, sh, dx, dy, dw, dh);
+
+
+	return v8::Undefined();
+}
+
 static v8::Handle<v8::Value> JS_fillRect( const v8::Arguments& args )
 {
 	v8::HandleScope handleScope;
 
 	int argc = args.Length();
 
-	v8::Local<v8::Object> self = args.Holder();
-	v8::Local<v8::External> wrap = v8::Local<v8::External>::Cast(self->GetInternalField(0));
-	CCanvasContext *context = static_cast<CCanvasContext *>(wrap->Value());
+	CCanvasContext *context = jsGetCObject<CCanvasContext>(args.Holder());
 
 	if( !context || argc < 4 )
 	{
@@ -116,9 +169,7 @@ static v8::Handle<v8::Value> JS_translate( const v8::Arguments& args )
 
 	int argc = args.Length();
 
-	v8::Local<v8::Object> self = args.Holder();
-	v8::Local<v8::External> wrap = v8::Local<v8::External>::Cast(self->GetInternalField(0));
-	CCanvasContext *context = static_cast<CCanvasContext *>(wrap->Value());
+	CCanvasContext *context = jsGetCObject<CCanvasContext>(args.Holder());
 
 	if( !context || argc < 2 )
 	{
@@ -139,9 +190,7 @@ static v8::Handle<v8::Value> JS_scale( const v8::Arguments& args )
 
 	int argc = args.Length();
 
-	v8::Local<v8::Object> self = args.Holder();
-	v8::Local<v8::External> wrap = v8::Local<v8::External>::Cast(self->GetInternalField(0));
-	CCanvasContext *context = static_cast<CCanvasContext *>(wrap->Value());
+	CCanvasContext *context = jsGetCObject<CCanvasContext>(args.Holder());
 
 	if( !context || argc < 2 )
 	{
@@ -162,9 +211,7 @@ static v8::Handle<v8::Value> JS_rotate( const v8::Arguments& args )
 
 	int argc = args.Length();
 
-	v8::Local<v8::Object> self = args.Holder();
-	v8::Local<v8::External> wrap = v8::Local<v8::External>::Cast(self->GetInternalField(0));
-	CCanvasContext *context = static_cast<CCanvasContext *>(wrap->Value());
+	CCanvasContext *context = jsGetCObject<CCanvasContext>(args.Holder());
 
 	if( !context || argc < 1 )
 	{
@@ -184,9 +231,7 @@ static v8::Handle<v8::Value> JS_setTransform( const v8::Arguments& args )
 
 	int argc = args.Length();
 
-	v8::Local<v8::Object> self = args.Holder();
-	v8::Local<v8::External> wrap = v8::Local<v8::External>::Cast(self->GetInternalField(0));
-	CCanvasContext *context = static_cast<CCanvasContext *>(wrap->Value());
+	CCanvasContext *context = jsGetCObject<CCanvasContext>(args.Holder());
 
 	if( !context || argc < 6 )
 	{
@@ -219,6 +264,7 @@ static JSStaticValue jsStaticValues[] = {
 
 static JSStaticFunction jsStaticFunctions[] = {
 	JS_FUNCTION_DEF(drawImage),
+	JS_FUNCTION_DEF(drawLabel),
 //	JS_FUNCTION_DEF(drawImageBatch),
 	JS_FUNCTION_DEF(fillRect),
 	JS_FUNCTION_DEF(save),
@@ -232,82 +278,49 @@ static JSStaticFunction jsStaticFunctions[] = {
 };
 
 JS_CLASS_EXPORT(CCanvasContext, Canvas)
+CCanvasContext::CCanvasContext()
+{ 
+	globalAlpha = 1.0; 
+	m_image = NULL;
+	
+	set_fillStyle("black");
+	set_strokeStyle("black");
+}
 
 void CCanvasContext::set_fillStyle(string fillStyle)
 {
-	m_fillStyle = StringUtil::lower( StringUtil::trim( fillStyle ) );
-
-	static const char *normalColors[] = {
-		"#000000", "black",	"#c0c0c0", "silver",
-		"#ff0000", "red",	"#0000ff", "blue",
-		"#ffffff", "white",	"#ffff00", "yellow",
-		"#00ff00", "green",	"#00ffff", "aqua",
-	};
-
-	int normalCorlorCount = sizeof(normalColors)/sizeof(char *);
-
-	if( m_fillStyle.empty() )
-	{
-		return;
+	unsigned int color = 0;
+	if( StringUtil::convertHTMLColor(fillStyle, color) )
+	{	
+		m_fillStyle = StringUtil::lower( StringUtil::trim( fillStyle ) );
+		m_fillColor.r = ((color & 0xff0000) >> 16) / 255.0;
+		m_fillColor.g = ((color & 0xff00) >> 8) / 255.0;
+		m_fillColor.b = (color & 0xff) / 255.0;
+		m_fillColor.a = 1.0;
 	}
-	
-	if( !StringUtil::startWith(m_fillStyle, "#") || !StringUtil::startWith(m_fillStyle, "rgb") )
-	{
-		// 非#或者rgb开头
-		
-		for( int i=0; i<normalCorlorCount/2; i++ )
-		{
-			if( m_fillStyle == normalColors[i*2+1] )
-			{
-				m_fillStyle = normalColors[i];
-				break;
-			}
-		}
-	}
-	
-	int r,g,b;
-
-	if( StringUtil::startWith(m_fillStyle, "#") )
-	{
-		if( m_fillStyle.size() > 4 )
-		{
-			// #ffff00
-			r = StringUtil::getHexInt(m_fillStyle, 1, 2);
-			g = StringUtil::getHexInt(m_fillStyle, 3, 2);
-			b = StringUtil::getHexInt(m_fillStyle, 5, 2);
-		}
-		else
-		{
-			// #ff0
-			r = StringUtil::getHexInt(m_fillStyle, 1, 1);
-			r = r*16+r;
-			g = StringUtil::getHexInt(m_fillStyle, 2, 1);
-			g = g*16 + g;
-			b = StringUtil::getHexInt(m_fillStyle, 3, 1);
-			b = b*16 + b;
-		}
-	}
-	else if( StringUtil::startWith(m_fillStyle, "rgb") )
-	{
-		sscanf(m_fillStyle.c_str(), "rgb(%d,%d,%d)", &r, &g, &b);
-	}
-
-	m_r = r/255.0; m_g = g/255.0; m_b = b/255.0;
 }
 
-string & CCanvasContext::get_fillStyle()
+void CCanvasContext::set_strokeStyle(string strokeStyle)
 {
-	return m_fillStyle;
+	unsigned int color = 0;
+	if( StringUtil::convertHTMLColor(strokeStyle, color) )
+	{	
+		m_strokeStyle = StringUtil::lower( StringUtil::trim( strokeStyle ) );
+		m_strokeColor.r = ((color & 0xff0000) >> 16) / 255.0;
+		m_strokeColor.g = ((color & 0xff00) >> 8) / 255.0;
+		m_strokeColor.b = (color & 0xff) / 255.0;
+		m_strokeColor.a = 1.0;
+	}
 }
 
 void CCanvasContext::drawImage(CImage *image, float sx, float sy, float sw, float sh, float dx, float dy, float dw, float dh)
 {
-	if( !image || !image->texture )
+	if( !image || !image->getTexture() )
 	{
 		return;
 	}
 
-	if( m_image && m_coords.size() > 0 && (image->texture != m_image->texture) )
+	if( m_image && m_coords.size() > 0 && (image->getTexture() != m_image->getTexture()) )
 	{
 		drawImageBatch(m_image, m_coords);
 		m_coords.clear();
@@ -323,56 +336,6 @@ void CCanvasContext::drawImage(CImage *image, float sx, float sy, float sw, floa
 	m_coords.push_back(dh);
 
 	m_image = image;
-	return;
-
-	//LOG("drawImage: %s %d %d %lu %f %f %f %f %f %f %f %f", image->get_src().c_str(), image->hasAlpha, image->texture, pthread_self(), sx, sy, sw, sh, dx, dy, dw, dh);
-
-	//glLoadIdentity();
-	//glPushMatrix();
-
-	glEnable(GL_TEXTURE_2D);
-	glBindTexture(GL_TEXTURE_2D, image->texture);
-
-	if( image->hasAlpha )
-	{
-		// 有alpha的PNG已经做了预乘
-		glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-		glEnable(GL_BLEND);
-	}
-	else
-	{
-		glDisable(GL_BLEND);
-	}
-
-
-	glEnableClientState(GL_VERTEX_ARRAY);
-	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-
-	GLfloat vertices[] = {
-		dx,		dy,
-		dx+dw,	dy,
-		dx,		dy+dh,
-		dx+dw,	dy+dh,
-	};
-
-	GLfloat textureCoords[] = {
-		sx/image->POTWidth,		sy/image->POTHeight,
-		(sx+sw)/image->POTWidth,	sy/image->POTHeight,
-		sx/image->POTWidth,		(sy+sh)/image->POTHeight,
-		(sx+sw)/image->POTWidth,	(sy+sh)/image->POTHeight,
-	};
-
-	glVertexPointer(2, GL_FLOAT, 0, vertices);
-	glTexCoordPointer(2, GL_FLOAT, 0, textureCoords);
-
-	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-
-	glDisable(GL_VERTEX_ARRAY);
-	glDisable(GL_TEXTURE_COORD_ARRAY);
-	glDisable(GL_TEXTURE_2D);
-	glDisable(GL_BLEND);
-
-	//glPopMatrix();
 }
 
 void CCanvasContext::drawImageBatch(CImage *image, const vector<float> &coords)
@@ -385,9 +348,9 @@ void CCanvasContext::drawImageBatch(CImage *image, const vector<float> &coords)
 	//glPushMatrix();
 	
 	glEnable(GL_TEXTURE_2D);
-	glBindTexture(GL_TEXTURE_2D, image->texture);
+	glBindTexture(GL_TEXTURE_2D, image->getTexture());
 	
-	if( image->hasAlpha )
+	if( image->hasAlpha() )
 	{
 		glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 		glEnable(GL_BLEND);
@@ -465,23 +428,26 @@ void CCanvasContext::drawImageBatch(CImage *image, const vector<float> &coords)
 		vertices[i*12+11] = dy + dh;
 		
 		// 6个点的纹理坐标，其中2,3点和4,5点相同
-		textureCoords[i*12] = sx / image->POTWidth;
-		textureCoords[i*12+1] = sy / image->POTHeight;
+		unsigned long POTWidth = image->POTWidth();
+		unsigned long POTHeight = image->POTHeight();
+
+		textureCoords[i*12] = sx / POTWidth;
+		textureCoords[i*12+1] = sy / POTHeight;
 		
-		textureCoords[i*12+2] = (sx + sw) / image->POTWidth;
-		textureCoords[i*12+3] = sy / image->POTHeight;
+		textureCoords[i*12+2] = (sx + sw) / POTWidth;
+		textureCoords[i*12+3] = sy / POTHeight;
 		
-		textureCoords[i*12+4] = sx / image->POTWidth;
-		textureCoords[i*12+5] = (sy + sh) / image->POTHeight;
+		textureCoords[i*12+4] = sx / POTWidth;
+		textureCoords[i*12+5] = (sy + sh) / POTHeight;
 		
-		textureCoords[i*12+6] = (sx + sw) / image->POTWidth;
-		textureCoords[i*12+7] = sy / image->POTHeight;
+		textureCoords[i*12+6] = (sx + sw) / POTWidth;
+		textureCoords[i*12+7] = sy / POTHeight;
 		
-		textureCoords[i*12+8] = sx / image->POTWidth;
-		textureCoords[i*12+9] = (sy + sh) / image->POTHeight;
+		textureCoords[i*12+8] = sx / POTWidth;
+		textureCoords[i*12+9] = (sy + sh) / POTHeight;
 		
-		textureCoords[i*12+10] = (sx + sw) / image->POTWidth;
-		textureCoords[i*12+11] = (sy + sh) / image->POTHeight;
+		textureCoords[i*12+10] = (sx + sw) / POTWidth;
+		textureCoords[i*12+11] = (sy + sh) / POTHeight;
 	}
 
 	glVertexPointer(2, GL_FLOAT, 0, vertices);
@@ -499,6 +465,54 @@ void CCanvasContext::drawImageBatch(CImage *image, const vector<float> &coords)
 	//glPopMatrix();
 }
 
+void CCanvasContext::drawLabel(CLabel *label, float sx, float sy, float sw, float sh, float dx, float dy, float dw, float dh)
+{
+	if( !label || !label->getTexture() )
+	{
+		return;
+	}
+
+	cleanDrawImage();
+
+	glEnable(GL_TEXTURE_2D);
+	glBindTexture(GL_TEXTURE_2D, label->getTexture());
+
+	// 已经做了预乘
+	glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+	glEnable(GL_BLEND);
+
+	glEnableClientState(GL_VERTEX_ARRAY);
+	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+
+	GLfloat vertices[] = {
+		dx,		dy,
+		dx+dw,	dy,
+		dx,		dy+dh,
+		dx+dw,	dy+dh,
+	};
+	
+	unsigned long POTWidth = label->POTWidth();
+	unsigned long POTHeight = label->POTHeight();
+
+	GLfloat textureCoords[] = {
+		sx/POTWidth,		sy/POTHeight,
+		(sx+sw)/POTWidth,	sy/POTHeight,
+		sx/POTWidth,		(sy+sh)/POTHeight,
+		(sx+sw)/POTWidth,	(sy+sh)/POTHeight,
+	};
+
+	glVertexPointer(2, GL_FLOAT, 0, vertices);
+	glTexCoordPointer(2, GL_FLOAT, 0, textureCoords);
+
+	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+
+	glDisable(GL_VERTEX_ARRAY);
+	glDisable(GL_TEXTURE_COORD_ARRAY);
+	glDisable(GL_TEXTURE_2D);
+	glDisable(GL_BLEND);
+}
+
+
 void CCanvasContext::cleanDrawImage()
 {
 	if( m_image && m_coords.size() > 0 )
@@ -515,7 +529,9 @@ void CCanvasContext::clearRect(float x, float y, float width, float height)
 
 void CCanvasContext::fillRect(float x, float y, float width, float height)
 {
-	glColor4f(m_r, m_g, m_b, globalAlpha);
+	cleanDrawImage();
+
+	glColor4f(m_fillColor.r, m_fillColor.g, m_fillColor.b, globalAlpha);
 	
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glEnable(GL_BLEND);
@@ -547,21 +563,29 @@ void CCanvasContext::restore()
 
 void CCanvasContext::translate(float x, float y)
 {
+	cleanDrawImage();
+
 	glTranslatef(x, y, 0);
 }
 
 void CCanvasContext::scale(float scaleX, float scaleY)
 {
+	cleanDrawImage();
+
 	glScalef(scaleX, scaleY, 0);
 }
 
 void CCanvasContext::rotate(float angle)
 {
+	cleanDrawImage();
+
 	glRotatef(angle, 0, 0, 1.0);
 }
 
 void CCanvasContext::setTransform(float m11, float m12, float m21, float m22, float dx, float dy)
 {
+	cleanDrawImage();
+
 	const GLfloat matrix[] = {
 		m11,	m12,	0,	dx,
 		m21,	m22,	0,	dy,

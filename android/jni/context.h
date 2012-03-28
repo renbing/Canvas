@@ -19,15 +19,27 @@
 
 #include "global.h"
 #include "image.h"
+#include "label.h"
 
 #include <vector>
 using std::vector;
 
+typedef struct
+{
+	float r;
+	float g;
+	float b;
+	float a;
+}Color4f;
+
 class CCanvasContext
 {
 	private:
-		float m_r,m_g,m_b;
+		Color4f m_fillColor;
 		string m_fillStyle;
+
+		Color4f m_strokeColor;
+		string m_strokeStyle;
 	
 	public:
 		float globalAlpha;
@@ -36,12 +48,17 @@ class CCanvasContext
 		JS_CLASS_EXPORT_DEF(CCanvasContext)
 
 		void set_fillStyle(string fillStyle);	
-		string & get_fillStyle();
+		const string & get_fillStyle() { return m_fillStyle; };
 
-		CCanvasContext() { m_r = m_g = m_b = 0.0; globalAlpha = 1.0; m_image = NULL;}
+		void set_strokeStyle(string strokeStyle);	
+		const string & get_strokeStyle() { return m_strokeStyle; };
+
+		CCanvasContext();
 
 		void drawImage(CImage *image, float sx, float sy, float sw, float sh, float dx, float dy, float dw, float dh);
 		void drawImageBatch(CImage *image, int count, float *coords);
+
+		void drawLabel(CLabel *label, float sx, float sy, float sw, float sh, float dx, float dy, float dw, float dh);
 
 		void clearRect(float x, float y, float width, float height);
 		void fillRect(float x, float y, float width, float height);

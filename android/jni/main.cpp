@@ -102,12 +102,15 @@ void Java_com_woyouquan_Canvas_nativeDone( JNIEnv *env )
 }
 
 
-/* EAGLRenderer 类JNI函数
+/* EAGLView 类JNI函数
 *	nativeInit(void)						OpenGL ES初始化
 *	nativeResize(int width, int height)		OpenGL ES窗口大小改变
 *	nativeRenderer(void)					OpenGL ES逐帧绘图
+*	nativeDown(int x, int y)				触摸点下
+*	nativeMove(int x, int y)				触摸移动
+*	nativeUp(int x, int y)					触摸结束
 */
-void Java_com_woyouquan_EAGLRenderer_nativeInit( JNIEnv *env , jobject jgl)
+void Java_com_woyouquan_EAGLView_nativeInit( JNIEnv *env , jobject jgl)
 {
 	env->GetJavaVM(&g_jvm);
 	g_jgl = env->NewGlobalRef(jgl);
@@ -115,7 +118,7 @@ void Java_com_woyouquan_EAGLRenderer_nativeInit( JNIEnv *env , jobject jgl)
 	LOG("opengl init");
 }
 
-void Java_com_woyouquan_EAGLRenderer_nativeResize( JNIEnv *env, jobject obj, jint width, jint height )
+void Java_com_woyouquan_EAGLView_nativeResize( JNIEnv *env, jobject obj, jint width, jint height )
 {
 	LOG("opengl resize: width=%d height=%d", width, height);
 	CCanvas::getInstance()->width = width;
@@ -142,7 +145,7 @@ void Java_com_woyouquan_EAGLRenderer_nativeResize( JNIEnv *env, jobject obj, jin
 	CV8Context::getInstance()->run(site);
 }
 
-void Java_com_woyouquan_EAGLRenderer_nativeRender( JNIEnv *env )
+void Java_com_woyouquan_EAGLView_nativeRender( JNIEnv *env )
 {
 	glClear(GL_COLOR_BUFFER_BIT);
 	
@@ -161,17 +164,17 @@ void Java_com_woyouquan_EAGLRenderer_nativeRender( JNIEnv *env )
 	//drawTest();
 }
 
-void Java_com_woyouquan_EAGLRenderer_nativeDown( JNIEnv *env, jobject obj, jfloat x, jfloat y )
+void Java_com_woyouquan_EAGLView_nativeDown( JNIEnv *env, jobject obj, jfloat x, jfloat y )
 {
 	CCanvas::getInstance()->onTouch(TOUCH_DOWN, x, y);
 }
 
-void Java_com_woyouquan_EAGLRenderer_nativeMove( JNIEnv *env, jobject obj, jfloat x, jfloat y )
+void Java_com_woyouquan_EAGLView_nativeMove( JNIEnv *env, jobject obj, jfloat x, jfloat y )
 {
 	CCanvas::getInstance()->onTouch(TOUCH_MOVE, x, y);
 }
 
-void Java_com_woyouquan_EAGLRenderer_nativeUp( JNIEnv *env, jobject obj, jfloat x, jfloat y )
+void Java_com_woyouquan_EAGLView_nativeUp( JNIEnv *env, jobject obj, jfloat x, jfloat y )
 {
 	CCanvas::getInstance()->onTouch(TOUCH_UP, x, y);
 }

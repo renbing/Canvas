@@ -34,13 +34,13 @@ class CAudio
 		~CAudio();
 
 		void set_src(string src);
-		string & get_src() { return m_src; }
+		const string & get_src() { return m_src; }
 
 		void set_loop(bool loop);
-		bool & get_loop() { return m_loop; }
+		bool get_loop() { return m_loop; }
 
 		void set_autoplay(bool autoplay);
-		bool & get_autoplay() { return m_autoplay; }
+		bool get_autoplay() { return m_autoplay; }
 		
 		void play();
 		void pause();

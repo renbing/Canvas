@@ -50,7 +50,7 @@ class CWebSocket
 
 		JS_CLASS_EXPORT_DEF(CWebSocket)
 
-		string & get_url() { return m_url; };
+		const string & get_url() { return m_url; };
 
 		static struct libwebsocket_context * sharedContext();
 		static void mainLoop();

@@ -48,9 +48,3 @@ void Point::set_src(string s)
 	LOG("point set src");
 	src = s;
 }
-
-string& Point::get_src()
-{
-	LOG("point get src");
-	return src;
-}

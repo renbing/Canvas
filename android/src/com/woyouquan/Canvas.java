@@ -2,7 +2,6 @@ package com.woyouquan;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.nio.FloatBuffer;
 
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
@@ -14,19 +13,19 @@ import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.graphics.Bitmap;
-import android.graphics.Color;
-import android.graphics.Paint;
-import android.media.MediaPlayer;
+import android.graphics.Typeface;
 import android.opengl.GLSurfaceView;
-import android.opengl.GLUtils;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.text.method.ScrollingMovementMethod;
+import android.util.Log;
+import android.util.TypedValue;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.Window;
 import android.view.WindowManager;
+import android.view.Gravity;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.view.View;
@@ -170,34 +169,8 @@ public class Canvas extends Activity {
     }
 }
 
-class EAGLView extends GLSurfaceView {
-    private EAGLRenderer mRenderer;
-    
-    public EAGLView(Context context, Handler handler) {
-        super(context);
-        // TODO Auto-generated constructor stub
-        
-        mRenderer = new EAGLRenderer(handler);
-        setRenderer(mRenderer);
-    }
-    
-    public void onDestroy() {
-    	mRenderer.onDestroy();
-    }
-    
-    public boolean onTouchEvent(final MotionEvent event) {
-    	queueEvent(new Runnable() {
-    		public void run() {
-    			mRenderer.handleTouchEvent(event);
-    		}
-    	});
-
-		return true;
-    }
-}
-
-class EAGLRenderer implements GLSurfaceView.Renderer {
-
+class EAGLView extends GLSurfaceView implements GLSurfaceView.Renderer {
+	
 	private Handler uiHandler;
 	private long time = System.currentTimeMillis();
 	private int fpCount = 0;
@@ -210,16 +183,28 @@ class EAGLRenderer implements GLSurfaceView.Renderer {
 	private static native void nativeDown(float x, float y);
 	private static native void nativeMove(float x, float y);
 	private static native void nativeUp(float x, float y);
-    
-    public EAGLRenderer(Handler handler) {
-    	uiHandler = handler;
+	
+    public EAGLView(Context context, Handler handler) {
+        super(context);
+        uiHandler = handler;
+        setRenderer(this);
     }
     
-    public void onDrawFrame(GL10 gl) {
-        // TODO Auto-generated method stub
+    public boolean onTouchEvent(final MotionEvent event) {
+    	final EAGLView glView = this;
+    	queueEvent(new Runnable() {
+    		public void run() {
+    			glView.handleTouchEvent(event);
+    		}
+    	});
+
+		return true;
+    }
+
+	public void onDrawFrame(GL10 gl) {
     	gl.glClear(GL10.GL_COLOR_BUFFER_BIT);
     	nativeRender();
-        
+    	
     	fpCount++;
     	if( (System.currentTimeMillis() - time) > 500 )
     	{
@@ -232,26 +217,19 @@ class EAGLRenderer implements GLSurfaceView.Renderer {
             msg.what = Canvas.FpsUpdate;
             Bundle data = new Bundle();
             data.putInt("fps", fps);
-            msg.setData(data); 
+            msg.setData(data);
             uiHandler.sendMessage(msg);
-    	}
-		//drawText(gl, "fps:" + String.valueOf(fps), 0, 24, 64, 32);
-    }
+    	}    	
+	}
 
-    public void onSurfaceChanged(GL10 gl, int width, int height) {
-        // TODO Auto-generated method stub
-        nativeResize(width, height);
-    }
+	public void onSurfaceChanged(GL10 gl, int width, int height) {
+        nativeResize(width, height);		
+	}
 
-    public void onSurfaceCreated(GL10 gl, EGLConfig config) {
-        // TODO Auto-generated method stub
-    	nativeInit();
-    }
-    
-    public void onDestroy() {
-    	
-    }
-    
+	public void onSurfaceCreated(GL10 gl, EGLConfig config) {
+		nativeInit();
+	}
+	
     public void handleTouchEvent(MotionEvent event) {
 		float x = event.getX();
 		float y = event.getY();
@@ -271,82 +249,8 @@ class EAGLRenderer implements GLSurfaceView.Renderer {
 			default:
 				break;
 		}
-    }
-    
-    public void drawText(GL10 gl, String text, int x, int y, int w, int h) {
-    	// Create an empty, mutable bitmap
-    	Bitmap bitmap = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
-    	// get a canvas to paint over the bitmap
-    	android.graphics.Canvas canvas = new android.graphics.Canvas(bitmap);
-    	bitmap.eraseColor(Color.WHITE);
+    }	
 
-    	// Draw the text
-    	Paint textPaint = new Paint();
-    	textPaint.setTextSize(24);
-    	textPaint.setAntiAlias(true);
-    	textPaint.setARGB(0xff, 0xff, 0x00, 0x00);
-    	// draw the text centered
-    	canvas.drawText(text, x, y, textPaint);
-
-    	int[] textures = new int[1];
-		//Generate one texture pointer...
-    	gl.glGenTextures(1, textures, 0);
-    	//...and bind it to our array
-    	gl.glBindTexture(GL10.GL_TEXTURE_2D, textures[0]);
-
-    	//Create Nearest Filtered Texture
-    	gl.glTexParameterf(GL10.GL_TEXTURE_2D, GL10.GL_TEXTURE_MIN_FILTER, GL10.GL_NEAREST);
-    	gl.glTexParameterf(GL10.GL_TEXTURE_2D, GL10.GL_TEXTURE_MAG_FILTER, GL10.GL_LINEAR);
-
-    	//Different possible texture parameters, e.g. GL10.GL_CLAMP_TO_EDGE
-    	gl.glTexParameterf(GL10.GL_TEXTURE_2D, GL10.GL_TEXTURE_WRAP_S, GL10.GL_REPEAT);
-    	gl.glTexParameterf(GL10.GL_TEXTURE_2D, GL10.GL_TEXTURE_WRAP_T, GL10.GL_REPEAT);
-
-    	GLUtils.texImage2D(GL10.GL_TEXTURE_2D, 0, bitmap, 0);
-
-    	bitmap.recycle();
-    	
-    	float textureCoords[] = {
-    		0.0f, 1.0f,
-    		1.0f, 1.0f,
-    		0.0f, 0.0f,
-    		1.0f, 0.0f,
-    	};
-    	
-    	float vertices[] = {
-    		0, -h,
-    		w, -h,
-    		0, 0,
-    		w, 0
-    	};
-    	
-    	ByteBuffer vbb = ByteBuffer.allocateDirect(vertices.length*4);
-    	vbb.order(ByteOrder.nativeOrder());
-    	FloatBuffer vertexBuffer = vbb.asFloatBuffer();
-    	vertexBuffer.put(vertices);
-    	vertexBuffer.position(0);
-    	
-    	ByteBuffer tbb = ByteBuffer.allocateDirect(textureCoords.length*4);
-    	tbb.order(ByteOrder.nativeOrder());
-    	FloatBuffer textureBuffer = tbb.asFloatBuffer();
-    	textureBuffer.put(textureCoords);
-    	textureBuffer.position(0);
-    	
-    	gl.glEnable(GL10.GL_TEXTURE_2D);
-    	gl.glBindTexture(GL10.GL_TEXTURE_2D, textures[0]);
-    	gl.glEnableClientState(GL10.GL_TEXTURE_COORD_ARRAY);
-    	
-    	gl.glTexCoordPointer(2, GL10.GL_FLOAT, 0, textureBuffer);
-    	gl.glVertexPointer(2, GL10.GL_FLOAT, 0, vertexBuffer);
-    	//gl.glColor4f(1, 0, 0, 1);
-    	gl.glDrawArrays(GL10.GL_TRIANGLE_STRIP, 0, 4);
-    	
-    	gl.glDisableClientState(GL10.GL_TEXTURE_COORD_ARRAY);
-    	gl.glDisable(GL10.GL_TEXTURE_2D);
-    	gl.glDeleteTextures(1, textures, 0);
-    	gl.glColor4f(1, 1, 1, 1);
-    }
-    
     // NDK C++调用Java函数
     public void alert(String content) {
         Message msg = new Message();
@@ -367,7 +271,88 @@ class EAGLRenderer implements GLSurfaceView.Renderer {
     }
     
     public JavaAudioPlayer newAudioPlayer() {
-    	JavaAudioPlayer player = new JavaAudioPlayer();
+    	JavaAudioPlayer player = new JavaAudioPlayer(this.getContext());
     	return player;
+    }
+
+    public void createTextBitmap(String text, int w, int h, int pw, int ph, String textAlign, String fontName, 
+    								float fontSize, String fontSizeUnit, int textColor, boolean bold, boolean italic, byte[] pixels) {
+       	
+    	Bitmap bitmap = Bitmap.createBitmap(pw, ph, Bitmap.Config.ARGB_8888);
+    	android.graphics.Canvas canvas = new android.graphics.Canvas(bitmap);
+    	bitmap.eraseColor(0);
+
+    	TextView textView = new TextView(this.getContext()); 
+    	textView.layout(0, 0, w, h);
+    	
+    	int hGravity = Gravity.LEFT;
+    	if( textAlign.equalsIgnoreCase("end") || textAlign.equalsIgnoreCase("right") )
+    	{
+    		hGravity = Gravity.RIGHT;
+    	}
+    	else if( textAlign.equalsIgnoreCase("center") )
+    	{
+    		hGravity = Gravity.CENTER;
+    	}
+    	textView.setGravity(hGravity);
+    	
+    	int unit = TypedValue.COMPLEX_UNIT_PX;
+    	if( fontSizeUnit.equalsIgnoreCase("pt") )
+    	{
+    		unit = TypedValue.COMPLEX_UNIT_PT;
+    	}
+    	else if( fontSizeUnit.equalsIgnoreCase("in") )
+    	{
+    		unit = TypedValue.COMPLEX_UNIT_IN;
+    	}
+    	else if( fontSizeUnit.equalsIgnoreCase("mm") )
+    	{
+    		unit = TypedValue.COMPLEX_UNIT_MM;
+    	}
+    	else if( fontSizeUnit.equalsIgnoreCase("cm") )
+    	{
+    		unit = TypedValue.COMPLEX_UNIT_MM;
+    		fontSize = fontSize * 10;
+    	}
+    	
+    	textView.setTextSize(unit, fontSize);
+    	
+    	int styleFace = Typeface.NORMAL;
+    	if( bold )
+    	{
+    		styleFace = styleFace | Typeface.BOLD;
+    	}
+    	if( italic )
+    	{
+    		styleFace = styleFace | Typeface.ITALIC;
+    	}
+    	
+    	Typeface fontFace = Typeface.defaultFromStyle(Typeface.NORMAL);
+    	if( fontName.equalsIgnoreCase("sans-serif") )
+    	{
+    		fontFace = Typeface.SANS_SERIF;
+    	}
+    	else if( fontName.equalsIgnoreCase("serif") )
+    	{
+    		fontFace = Typeface.SERIF;
+    	}
+    	else if( fontName.equalsIgnoreCase("monospace") )
+    	{
+    		fontFace = Typeface.MONOSPACE;
+    	}
+    	
+    	textView.setTypeface(fontFace, styleFace);
+    	textView.setTextColor(textColor);
+    	textView.setText(text);
+    	textView.setMaxLines(h/textView.getLineHeight());
+    	textView.setDrawingCacheEnabled(true); 
+    	canvas.drawBitmap(textView.getDrawingCache(), 0, 0, null); 
+    	
+    	//byte[] pixels = new byte[bitmap.getWidth() * bitmap.getHeight() * 4];
+    	ByteBuffer buf = ByteBuffer.wrap(pixels);
+    	buf.order(ByteOrder.nativeOrder());
+    	bitmap.copyPixelsToBuffer(buf);
+
+    	bitmap.recycle();    	
     }
 }

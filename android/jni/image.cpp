@@ -25,16 +25,10 @@
 #include "stringutil.h"
 #include "urllib.h"
 
-#define CC_RGB_PREMULTIPLY_APLHA(vr, vg, vb, va) \
-(unsigned)(((unsigned)((unsigned char)(vr) * ((unsigned char)(va) + 1)) >> 8) | \
-		((unsigned)((unsigned char)(vg) * ((unsigned char)(va) + 1) >> 8) << 8) | \
-		((unsigned)((unsigned char)(vb) * ((unsigned char)(va) + 1) >> 8) << 16) | \
-		((unsigned)(unsigned char)(va) << 24))
-
 extern zip *apkArchive;
 
-JS_PROPERTY_READONLY(CImage, Int32, width)
-JS_PROPERTY_READONLY(CImage, Int32, height)
+JS_PROPERTY_READONLY_BYFUNC(CImage, UInt32, width)
+JS_PROPERTY_READONLY_BYFUNC(CImage, UInt32, height)
 JS_PROPERTY_BYFUNC(CImage, String, src)
 JS_PROPERTY(CImage, Function, onload)
 
@@ -87,21 +81,21 @@ static void imageLoadedCallback(Downloader *downloader, void *arg)
 
 CImage::CImage()
 {
-	width = 0;
-	height = 0;
-	POTWidth = 0;
-	POTHeight = 0;
-	hasAlpha = true;
+	m_width = 0;
+	m_height = 0;
+	m_POTWidth = 0;
+	m_POTHeight = 0;
+	m_hasAlpha = true;
 
-	texture = 0;
+	m_texture = 0;
 }
 
 CImage::~CImage()
 {
-	if( texture )
+	if( m_texture )
 	{
 		LOG("delete texture");
-		glDeleteTextures(1, &texture);
+		glDeleteTextures(1, &m_texture);
 	}
 }
 
@@ -133,7 +127,7 @@ void CImage::set_src(string src)
 
 void CImage::createTextureWithPngData(PNGSOURCE source, const void *input, png_rw_ptr read_fn)
 {
-	string imagePath = CV8Context::getInstance()->path() + m_src;
+	string imagePath = URLUtil::url2Absolute( CV8Context::getInstance()->path() , m_src );
 	const char *filename = imagePath.c_str();
 
 	do{
@@ -202,9 +196,9 @@ void CImage::createTextureWithPngData(PNGSOURCE source, const void *input, png_r
 		png_uint_32 twidth, theight;
 
 		png_get_IHDR(png_ptr, info_ptr, &twidth, &theight, &bit_depth, &color_type, NULL, NULL, NULL);
-		hasAlpha = ( color_type & PNG_COLOR_MASK_ALPHA ) ? true:false;
+		m_hasAlpha = ( color_type & PNG_COLOR_MASK_ALPHA ) ? true:false;
 
-		LOG("PNG width=%u height=%u bit_depth=%d alpha=%d", twidth, theight, bit_depth, hasAlpha);
+		LOG("PNG width=%u height=%u bit_depth=%d alpha=%d", twidth, theight, bit_depth, m_hasAlpha);
 		
 
 		// Update the png info struct.
@@ -213,14 +207,14 @@ void CImage::createTextureWithPngData(PNGSOURCE source, const void *input, png_r
 		int rowbytes = png_get_rowbytes(png_ptr, info_ptr);
 		LOG("PNG rowbytes:%d", rowbytes);
 		
-		int bytes_per_component = hasAlpha ? 4:3;
+		int bytes_per_component = m_hasAlpha ? 4:3;
 
-		width = twidth;
-		height = theight;
-		POTWidth = computePOT(width);
-		POTHeight = computePOT(height);
+		m_width = twidth;
+		m_height = theight;
+		m_POTWidth = computePOT(m_width);
+		m_POTHeight = computePOT(m_height);
 
-		png_byte *image_data = new png_byte[POTWidth * POTHeight * bytes_per_component];
+		png_byte *image_data = new png_byte[m_POTWidth * m_POTHeight * bytes_per_component];
 		if( !image_data )
 		{
 			png_destroy_read_struct(&png_ptr, &info_ptr, (png_infopp) NULL);
@@ -240,7 +234,7 @@ void CImage::createTextureWithPngData(PNGSOURCE source, const void *input, png_r
 
 		for( int i = 0; i < theight; i++ )
 		{
-			row_pointers[i] = image_data + i * POTWidth * bytes_per_component;
+			row_pointers[i] = image_data + i * m_POTWidth * bytes_per_component;
 		}
 
 		png_read_image(png_ptr, row_pointers);
@@ -249,42 +243,37 @@ void CImage::createTextureWithPngData(PNGSOURCE source, const void *input, png_r
 		delete[] row_pointers;
 
 		// 如果有alpha值,开始预乘
-		if( hasAlpha )
+		if( m_hasAlpha )
 		{
 			for( int i=0; i<theight; i++ )
 			{
 				for( int j=0; j<twidth; j++ )
 				{
-					unsigned char *pixel = (unsigned char *)(image_data + (i * POTWidth + j) * bytes_per_component);
+					unsigned char *pixel = (unsigned char *)(image_data + (i * m_POTWidth + j) * bytes_per_component);
 					*((unsigned int *)pixel) = CC_RGB_PREMULTIPLY_APLHA( pixel[0], pixel[1], pixel[2], pixel[3] );
 				}
 			}
 		}
 
 		// 创建Opengl ES Texture
-		glGenTextures(1, &texture);
-		glBindTexture(GL_TEXTURE_2D, texture);
+		glGenTextures(1, &m_texture);
+		glBindTexture(GL_TEXTURE_2D, m_texture);
 
 		glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
-		//glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
+		//glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_NEAREST);
 		
-		if( hasAlpha )
+		if( m_hasAlpha )
 		{
-			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, POTWidth, POTHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, image_data);
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, m_POTWidth, m_POTHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, image_data);
 		}
 		else
 		{
-			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, POTWidth, POTHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, image_data);
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, m_POTWidth, m_POTHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, image_data);
 		}
 
 		LOG("Loading PNG: %s finish",filename);
 
 		delete[] image_data;
 	}while(false);
-}
-
-string & CImage::get_src()
-{
-	return m_src;
 }
