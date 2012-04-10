@@ -19,6 +19,7 @@ public class JavaAudioPlayer implements OnPreparedListener, OnCompletionListener
 	private boolean mPlayerPrepared;
 	private boolean mAutoplay;
 	private boolean mLoop;
+	private float mVolume;
 	private String mSource;
 	
 	private SoundPool mSoundPool;
@@ -36,7 +37,8 @@ public class JavaAudioPlayer implements OnPreparedListener, OnCompletionListener
     	mPlayerPrepared = false;
     	mPlaying = false;
     	mAutoplay = false;
-    	mLoop = false;  
+    	mLoop = false; 
+    	mVolume = 1.0f;
     	
     	mSoundID = 0;
     	mSoundStreamID = 0;
@@ -46,13 +48,14 @@ public class JavaAudioPlayer implements OnPreparedListener, OnCompletionListener
     	
     	mSource = path;
     	mPlayer.reset();
-    	mPlayer.setLooping(mLoop);
-    	
 
 		mSoundPool.stop(mSoundStreamID);
 		mSoundStreamID = 0;
 		mSoundPool.unload(mSoundID);
 		mSoundID = 0;
+		
+		setLoop(mLoop);
+		setVolume(mVolume);
     	
     	try {
 			mPlayer.setDataSource(path);
@@ -73,6 +76,8 @@ public class JavaAudioPlayer implements OnPreparedListener, OnCompletionListener
     public void setLoop(boolean loop) {
     	mLoop = true;
     	mPlayer.setLooping(loop);
+    	int loopMode = mLoop ? -1 : 0;
+    	mSoundPool.setLoop(mSoundStreamID, loopMode);
     }
     
     public void setAutoplay(boolean autoplay) {
@@ -136,6 +141,12 @@ public class JavaAudioPlayer implements OnPreparedListener, OnCompletionListener
 		}
 	}
 	
+	public void setVolume(float volume) {
+		mVolume = volume;
+		mPlayer.setVolume(volume, volume);
+		mSoundPool.setVolume(mSoundStreamID, volume, volume);
+	}
+	
 	public void release() {
 		mPlayer.release();
 		mSoundPool.stop(mSoundStreamID);
@@ -144,13 +155,16 @@ public class JavaAudioPlayer implements OnPreparedListener, OnCompletionListener
 	}
 
 	public void onLoadComplete(SoundPool soundPool, int sampleId, int status) {
-		float volume = getVolume();
 		int loopMode = mLoop ? -1 : 0;
-		mSoundStreamID = soundPool.play(mSoundID, volume, volume, 1, loopMode, 1f);
+		mSoundStreamID = soundPool.play(mSoundID, mVolume, mVolume, 1, loopMode, 1f);
 		Log.v("debug", "sound: " + String.valueOf(mSoundID) + " " + String.valueOf(mSoundStreamID));
 		if( !(mPlaying || mAutoplay) )
 		{
 			soundPool.pause(mSoundStreamID);
+		}
+		else
+		{
+			mPlaying = true;
 		}
 	}
 }

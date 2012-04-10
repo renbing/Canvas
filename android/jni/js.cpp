@@ -21,6 +21,7 @@
 #include "network.h"
 #include "stringutil.h"
 #include "urllib.h"
+#include "jnihelper.h"
 
 #include "point.h"
 #include "image.h"
@@ -32,7 +33,7 @@
 #include "websocket.h"
 #include "audio.h"
 #include "label.h"
-#include "jnihelper.h"
+#include "bitmap.h"
 
 
 #include "js.h"
@@ -217,6 +218,7 @@ bool CV8Context::run(const string &path)
 	globalTpl->Set(v8::String::New("WebSocket"), CWebSocket::exportJS());
 	globalTpl->Set(v8::String::New("Audio"), CAudio::exportJS());
 	globalTpl->Set(v8::String::New("Label"), CLabel::exportJS());
+	globalTpl->Set(v8::String::New("Bitmap"), CBitmap::exportJS());
 
 	m_ctx = v8::Context::New(0, globalTpl);
 

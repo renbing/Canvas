@@ -96,6 +96,30 @@ class JniHelper
 			return method;
 		}
 
+		jfieldID getField(jobject obj, const char *fieldName, const char *params)
+		{
+			if( m_env == NULL )
+			{
+				return NULL;
+			}
+
+			jclass cls = m_env->GetObjectClass(obj);
+			if( cls == NULL )
+			{
+				LOG("Get Java class fail");
+				return NULL;
+			}
+
+			jfieldID field = m_env->GetFieldID(cls, fieldName, params);
+			if( field == NULL )
+			{
+				LOG("Get Java field fail");
+				return NULL;
+			}
+
+			return field;
+		}
+
 		JNIEnv * getEnv() { return m_env; }
 
 		void DeleteGlobalRef(jobject obj)

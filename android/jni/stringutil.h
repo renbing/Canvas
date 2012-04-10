@@ -214,7 +214,7 @@ static bool convertHTMLColor(const string &style, unsigned int &color)
 		{
 			if( colorStyle == normalColors[i*2+1] )
 			{
-				colorStyle = normalColors[i];
+				colorStyle = normalColors[i*2];
 				bNormalColor = true;
 				break;
 			}
@@ -226,7 +226,8 @@ static bool convertHTMLColor(const string &style, unsigned int &color)
 		}
 	}
 	
-	int r,g,b;
+	unsigned int r,g,b,a;
+	r = g = b = a = 255;
 
 	if( startWith(colorStyle, "#") )
 	{
@@ -252,6 +253,15 @@ static bool convertHTMLColor(const string &style, unsigned int &color)
 			return false;
 		}
 	}
+	else if( startWith(colorStyle, "rgba") )
+	{
+		float alpha;
+		if( sscanf(colorStyle.c_str(), "rgba(%d,%d,%d,%d)", &r, &g, &b, &alpha) != 4 )
+		{
+			return false;
+		}
+		a = alpha * 255;
+	}
 	else if( startWith(colorStyle, "rgb") )
 	{
 		if( sscanf(colorStyle.c_str(), "rgb(%d,%d,%d)", &r, &g, &b) != 3 )
@@ -260,13 +270,13 @@ static bool convertHTMLColor(const string &style, unsigned int &color)
 		}
 	}
 
-	if( r > 255 || g > 255 | b > 255 )
+	if( r > 255 || g > 255 || b > 255 || a > 255 )
 	{
 		return false;
 	}
 
 	// ARGB
-	color = 0xff000000 | r<<16 | g << 8 | b;
+	color = a<<24 | r<<16 | g << 8 | b;
 	return true;
 }
 

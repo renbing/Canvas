@@ -26,8 +26,8 @@ typedef enum {ZIP, RAW} PNGSOURCE;
 class CImage
 {
 	private:
-		unsigned int m_width;
-		unsigned int m_height;
+		unsigned long m_width;
+		unsigned long m_height;
 		unsigned long m_POTWidth;
 		unsigned long m_POTHeight;
 		bool m_hasAlpha;
@@ -45,8 +45,8 @@ class CImage
 		CImage();
 		~CImage();
 
-		unsigned int get_width() { return m_width; }		
-		unsigned int get_height() { return m_height; }
+		unsigned long get_width() { return m_width; }		
+		unsigned long get_height() { return m_height; }
 
 		void set_src(string src);
 		const string & get_src() { return m_src; };

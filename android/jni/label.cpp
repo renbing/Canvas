@@ -64,7 +64,7 @@ CLabel::CLabel()
 	m_fontItalic = false;
 
 	m_POTWidth = m_POTHeight = width = height = 32;
-	set_font("10px sans-serif");
+	set_font("14px sans");
 	set_fillStyle("black");
 	set_strokeStyle("black");
 }
@@ -204,13 +204,11 @@ GLuint CLabel::getTexture()
 		}
 
 		// 创建/更新Opengl ES Texture
-		if( m_texture )
+		if( !m_texture )
 		{
-			glDeleteTextures(1, &m_texture);
-			m_texture = 0;
+			glGenTextures(1, &m_texture);
 		}
 		glEnable(GL_TEXTURE_2D);
-		glGenTextures(1, &m_texture);
 		glBindTexture(GL_TEXTURE_2D, m_texture);
 
 		glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);

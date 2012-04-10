@@ -9,26 +9,48 @@ import javax.microedition.khronos.opengles.GL10;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
+import android.content.pm.ActivityInfo;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
+import android.content.res.Configuration;
 import android.graphics.Bitmap;
+import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.Paint.Align;
+import android.graphics.Paint.Cap;
+import android.graphics.Paint.Join;
+import android.graphics.Path;
+import android.graphics.Point;
+import android.graphics.PorterDuff;
+import android.graphics.PorterDuffXfermode;
 import android.graphics.Typeface;
+import android.graphics.Xfermode;
 import android.opengl.GLSurfaceView;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.text.InputType;
+import android.text.StaticLayout;
 import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
+import android.view.View.OnFocusChangeListener;
+import android.view.View.OnKeyListener;
+import android.view.View.OnTouchListener;
 import android.view.Window;
 import android.view.WindowManager;
 import android.view.Gravity;
+import android.widget.AbsoluteLayout;
+import android.widget.EditText;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+import android.widget.TextView.OnEditorActionListener;
 import android.view.View;
+import android.view.inputmethod.EditorInfo;
+import android.view.inputmethod.InputMethodManager;
 
 public class Canvas extends Activity {
     /** Called when the activity is first created. */
@@ -62,13 +84,16 @@ public class Canvas extends Activity {
     	
     	String apkPath = appInfo.sourceDir;
     	nativeInit(apkPath);
+    	
+    	//setContentView(new MyView(this));
 
+    	
     	setContentView(R.layout.main);
     	
         mGLView = new EAGLView(this, handler);
         //mGLView.setOnTouchListener(new TouchListener());
         
-        RelativeLayout layout = (RelativeLayout)findViewById(R.id.mainLayout);
+        AbsoluteLayout layout = (AbsoluteLayout)findViewById(R.id.mainLayout);
         layout.addView(mGLView, 0);
         
         mFps = (TextView)findViewById(R.id.fps);
@@ -91,6 +116,41 @@ public class Canvas extends Activity {
         mConsole.setMovementMethod(new ScrollingMovementMethod());
         mConsole.setVisibility(View.INVISIBLE);
         
+        EditText input = new EditText(this);
+        input.setSingleLine(true);
+        input.setHint("hello");
+        input.setHintTextColor(Color.RED);
+        //input.setBackgroundColor(Color.TRANSPARENT);
+        //input.setBackgroundDrawable(null);
+        input.setTextColor(Color.RED);
+        input.setGravity(Gravity.CENTER_VERTICAL | Gravity.CENTER_HORIZONTAL);
+        input.setImeOptions(EditorInfo.IME_ACTION_DONE);
+        input.setOnTouchListener(new OnTouchListener() {
+        	public boolean onTouch(View v, MotionEvent event) {
+        		((EditText)v).setText(String.valueOf(v.hasFocus()));
+    			InputMethodManager imm = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
+    			imm.showSoftInput(v, 0);
+        		return false;
+        	}
+        });
+        input.setOnEditorActionListener(new OnEditorActionListener() {
+        	public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
+        		if( actionId == EditorInfo.IME_ACTION_DONE
+        				|| event.getAction() == KeyEvent.ACTION_DOWN 
+        				|| event.getKeyCode() == KeyEvent.KEYCODE_ENTER){
+        			v.setText("end");
+        			v.setInputType(InputType.TYPE_NULL);
+        			InputMethodManager imm = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
+        			imm.hideSoftInputFromWindow(v.getWindowToken(), 0);
+        			return true;
+        		}
+        		return false;
+        	}
+        });
+        
+        AbsoluteLayout.LayoutParams inputLP = new AbsoluteLayout.LayoutParams(400, 62, 0, 200);
+        //layout.addView(input, inputLP);
+        
         //stringFromJNI();
     }
     
@@ -98,22 +158,22 @@ public class Canvas extends Activity {
     public void onDestroy()
     {
     	super.onDestroy();
-    	mGLView.onPause();
+    	//mGLView.onPause();
     	
-    	nativeDone();
+    	//nativeDone();
     	android.os.Process.killProcess(android.os.Process.myPid());
     }
     
 	@Override
 	protected void onPause() {
 		super.onPause();
-		mGLView.onPause();
+		//mGLView.onPause();
 	}
 
 	@Override
 	protected void onResume() {
 		super.onResume();
-		mGLView.onResume();
+		//mGLView.onResume();
 	}
 	@Override
 	public boolean onKeyDown(int keyCode, KeyEvent event) {
@@ -271,88 +331,66 @@ class EAGLView extends GLSurfaceView implements GLSurfaceView.Renderer {
     }
     
     public JavaAudioPlayer newAudioPlayer() {
-    	JavaAudioPlayer player = new JavaAudioPlayer(this.getContext());
-    	return player;
+    	return new JavaAudioPlayer(this.getContext());
     }
-
+    
+    public JavaBitmap newBitmap(int w, int h) {
+    	return new JavaBitmap(this.getContext(), w, h);
+    }
+    
     public void createTextBitmap(String text, int w, int h, int pw, int ph, String textAlign, String fontName, 
     								float fontSize, String fontSizeUnit, int textColor, boolean bold, boolean italic, byte[] pixels) {
        	
-    	Bitmap bitmap = Bitmap.createBitmap(pw, ph, Bitmap.Config.ARGB_8888);
-    	android.graphics.Canvas canvas = new android.graphics.Canvas(bitmap);
-    	bitmap.eraseColor(0);
-
-    	TextView textView = new TextView(this.getContext()); 
-    	textView.layout(0, 0, w, h);
-    	
-    	int hGravity = Gravity.LEFT;
-    	if( textAlign.equalsIgnoreCase("end") || textAlign.equalsIgnoreCase("right") )
-    	{
-    		hGravity = Gravity.RIGHT;
-    	}
-    	else if( textAlign.equalsIgnoreCase("center") )
-    	{
-    		hGravity = Gravity.CENTER;
-    	}
-    	textView.setGravity(hGravity);
-    	
-    	int unit = TypedValue.COMPLEX_UNIT_PX;
-    	if( fontSizeUnit.equalsIgnoreCase("pt") )
-    	{
-    		unit = TypedValue.COMPLEX_UNIT_PT;
-    	}
-    	else if( fontSizeUnit.equalsIgnoreCase("in") )
-    	{
-    		unit = TypedValue.COMPLEX_UNIT_IN;
-    	}
-    	else if( fontSizeUnit.equalsIgnoreCase("mm") )
-    	{
-    		unit = TypedValue.COMPLEX_UNIT_MM;
-    	}
-    	else if( fontSizeUnit.equalsIgnoreCase("cm") )
-    	{
-    		unit = TypedValue.COMPLEX_UNIT_MM;
-    		fontSize = fontSize * 10;
-    	}
-    	
-    	textView.setTextSize(unit, fontSize);
-    	
-    	int styleFace = Typeface.NORMAL;
-    	if( bold )
-    	{
-    		styleFace = styleFace | Typeface.BOLD;
-    	}
-    	if( italic )
-    	{
-    		styleFace = styleFace | Typeface.ITALIC;
-    	}
-    	
-    	Typeface fontFace = Typeface.defaultFromStyle(Typeface.NORMAL);
-    	if( fontName.equalsIgnoreCase("sans-serif") )
-    	{
-    		fontFace = Typeface.SANS_SERIF;
-    	}
-    	else if( fontName.equalsIgnoreCase("serif") )
-    	{
-    		fontFace = Typeface.SERIF;
-    	}
-    	else if( fontName.equalsIgnoreCase("monospace") )
-    	{
-    		fontFace = Typeface.MONOSPACE;
-    	}
-    	
-    	textView.setTypeface(fontFace, styleFace);
-    	textView.setTextColor(textColor);
-    	textView.setText(text);
-    	textView.setMaxLines(h/textView.getLineHeight());
-    	textView.setDrawingCacheEnabled(true); 
-    	canvas.drawBitmap(textView.getDrawingCache(), 0, 0, null); 
-    	
-    	//byte[] pixels = new byte[bitmap.getWidth() * bitmap.getHeight() * 4];
-    	ByteBuffer buf = ByteBuffer.wrap(pixels);
-    	buf.order(ByteOrder.nativeOrder());
-    	bitmap.copyPixelsToBuffer(buf);
-
-    	bitmap.recycle();    	
+    	JavaBitmap jb = new JavaBitmap(this.getContext(), pw, ph);
+    	jb.fillText(text, 0, 0, w, h, textAlign, fontName, fontSize, fontSizeUnit, textColor, bold, italic);
+    	jb.getPixels(pixels);
     }
+}
+
+class MyView extends View {
+
+	public MyView(Context context) {
+		super(context);
+	}
+	protected void onDraw(android.graphics.Canvas canvas) {
+		super.onDraw(canvas);
+		canvas.drawColor(Color.WHITE);
+		/*
+		JavaBitmap bitmap = new JavaBitmap(this.getContext(), canvas, 200, 200);
+		bitmap.beginPath();
+		bitmap.moveTo(0, 0);
+		bitmap.lineTo(100, 0);
+		bitmap.lineTo(100, 100);
+		bitmap.closePath();
+		bitmap.setContextState("round", "round", 3, 10, Color.RED, Color.RED, false);
+		bitmap.stroke();
+		bitmap.clearRect(20, 20, 50, 50);
+		bitmap.fillText("hello world", 100, 100, 50, 100, "center", "sans-serif", 14, "px", Color.RED, true, true, null);
+
+		
+		canvas.drawColor(Color.WHITE);
+		
+		Paint paint = new Paint();
+		paint.setAntiAlias(true);
+		paint.setColor(Color.RED);
+		paint.setStyle(Paint.Style.STROKE);
+		paint.setStrokeWidth(3);
+		//paint.setStrokeJoin(Join.valueOf("ROUND"));
+		
+		Path path = new Path();
+		path.moveTo(0, 0);
+		path.lineTo(100, 100);
+		path.lineTo(100, 0);
+		path.close();
+		canvas.drawPath(path, paint);
+		
+		paint.setColor(Color.TRANSPARENT);
+		paint.setStyle(Paint.Style.FILL);
+		Xfermode mode = paint.getXfermode();
+		paint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.CLEAR));
+		canvas.drawRect(100, 100, 200, 200, paint);
+		paint.setXfermode(mode);
+		canvas.drawRect(20, 20, 100, 100, paint);
+		*/
+	}
 }

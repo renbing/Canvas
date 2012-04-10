@@ -136,7 +136,7 @@ string url2Absolute(const string& base,const string& href)
 			meta_absolute.path = meta_base.path.substr(0,parent+1) + meta_href.path.substr(pos,meta_href.path.length()-pos);
 		}else
 		{
-			meta_absolute.path = meta_base.path;
+			meta_absolute.path = meta_href.path;
 		}
 
 		meta_absolute.query = meta_href.query;

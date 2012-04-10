@@ -132,7 +132,8 @@ void Java_com_woyouquan_EAGLView_nativeResize( JNIEnv *env, jobject obj, jint wi
 	glScalef(1.0, -1.0, 1.0);
 	glMatrixMode(GL_MODELVIEW);
 
-	glClearColor(0,0,0,1.0);
+	//glClearColor(1,1,1,1);
+	glClearColor(0,0,0,1);
 	glColor4f(1,1,1,1);
 
 	glEnable(GL_BLEND);

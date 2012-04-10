@@ -61,11 +61,15 @@ inline v8::Handle<v8::Value> jsConstructor<CAudio>( const v8::Arguments& args )
 JS_PROPERTY_BYFUNC(CAudio, Boolean, loop)
 JS_PROPERTY_BYFUNC(CAudio, Boolean, autoplay)
 JS_PROPERTY_BYFUNC(CAudio, String, src)
+JS_PROPERTY_BYFUNC(CAudio, Boolean, muted)
+JS_PROPERTY_BYFUNC(CAudio, Number, volume)
 
 static JSStaticValue jsStaticValues[] = {
 	JS_PROPERTY_DEF(loop),
 	JS_PROPERTY_DEF(autoplay),
 	JS_PROPERTY_DEF(src),
+	JS_PROPERTY_DEF(muted),
+	JS_PROPERTY_DEF(volume),
 	{0, 0, 0}
 };
 
@@ -82,9 +86,16 @@ JS_CLASS_EXPORT(CAudio, Audio)
 
 CAudio::CAudio()
 {
-	m_autoplay = true;
+	init();
+}
+
+void CAudio::init()
+{
+	m_autoplay = false;
 	m_loop = false;
 	m_player = NULL;
+	m_muted = false;
+	m_volume = 1.0;
 
 	JniHelper jniHelper;
 	JNIEnv *env = jniHelper.getEnv();
@@ -98,7 +109,7 @@ CAudio::CAudio()
 
 CAudio::CAudio(const string &src)
 {
-	CAudio();
+	init();
 	set_src(src);
 }
 
@@ -126,7 +137,6 @@ void CAudio::set_src(string src)
 
 	if( !m_player )
 	{
-		LOG("CAudio m_player empty");
 		return;
 	}
 
@@ -148,7 +158,6 @@ void CAudio::play()
 {
 	if( !m_player )
 	{
-		LOG("CAudio m_player empty");
 		return;
 	}
 
@@ -166,7 +175,6 @@ void CAudio::pause()
 {
 	if( !m_player )
 	{
-		LOG("CAudio m_player empty");
 		return;
 	}
 
@@ -186,7 +194,6 @@ void CAudio::set_loop(bool loop)
 
 	if( !m_player )
 	{
-		LOG("CAudio m_player empty");
 		return;
 	}
 
@@ -206,7 +213,6 @@ void CAudio::set_autoplay(bool autoplay)
 
 	if( !m_player )
 	{
-		LOG("CAudio m_player empty");
 		return;
 	}
 
@@ -217,5 +223,48 @@ void CAudio::set_autoplay(bool autoplay)
 	if( env != NULL && method != NULL )
 	{
 		env->CallVoidMethod(m_player, method, autoplay);
+	}
+}
+
+void CAudio::set_muted(bool muted)
+{
+	m_muted = muted;
+
+	if( !m_player )
+	{
+		return;
+	}
+
+	float realVolume = m_muted ? 0.0 : m_volume;
+
+	JniHelper jniHelper;
+
+	JNIEnv *env = jniHelper.getEnv();
+	jmethodID method = jniHelper.getMethod(m_player, "setVolume", "(F)V");
+	if( env != NULL && method != NULL )
+	{
+		env->CallVoidMethod(m_player, method, realVolume);
+	}
+}
+
+
+void CAudio::set_volume(float volume)
+{
+	m_volume = volume;
+
+	if( !m_player )
+	{
+		return;
+	}
+
+	float realVolume = m_muted ? 0.0 : m_volume;
+
+	JniHelper jniHelper;
+
+	JNIEnv *env = jniHelper.getEnv();
+	jmethodID method = jniHelper.getMethod(m_player, "setVolume", "(F)V");
+	if( env != NULL && method != NULL )
+	{
+		env->CallVoidMethod(m_player, method, realVolume);
 	}
 }
