@@ -9,7 +9,15 @@
 #ifndef __Canvas__MovieClip__
 #define __Canvas__MovieClip__
 
+#include <JavaScriptCore/JavaScriptCore.h>
 #include <iostream>
+#include <vector>
+#include <string>
+#include <map>
+
+using std::vector;
+using std::string;
+using std::map;
 
 typedef struct
 {
@@ -24,19 +32,23 @@ typedef struct
 typedef enum {
     MOUSE_DOWN = 1,
     MOUSE_MOVE = 2,
-    MOUSE_UP = 3
+    MOUSE_UP = 3,
+    ENTER_FRAME = 4
 }EventType;
 
 typedef struct
 {
     EventType type;
+    bool isStoped;
     void *data;
 }Event;
+
+class MovieClip;
 
 class EventCallback
 {
     public:
-        virtual void call(const MovieClip *obj, const Event *e) = 0;
+        virtual void call(const MovieClip *obj, const Event *e = NULL) = 0;
         virtual ~EventCallback(){}
 };
 
@@ -46,20 +58,22 @@ class JSEventCallback : public EventCallback
         JSObjectRef callback;
 
     public:
-        JSEventCallback(JSObjectRef callback) callback(callback){}
-        virtual void call(const MovieClip *obj, const Event *e);
+        JSEventCallback(JSObjectRef callback) : callback(callback){}
+
+        virtual void call(const MovieClip *obj, const Event *e = NULL) {
+        
+        }
 
         bool operator==(const JSEventCallback &target) {
             return callback == target.callback;            
         }
-}
-
-void JSEventCallback::call(const MovieClip *obj, const Event *e) {
-}
+};
 
 class DisplayObject
 {
     public:
+        MovieClip *parent;
+    
         virtual void render() = 0;
         virtual ~DisplayObject(){};
 };
@@ -78,9 +92,6 @@ class Texture : public DisplayObject
         float dy;
         float dw;
         float dh;
-
-    public:
-        MovieClip *parent; 
 
     public:
         virtual void render();
@@ -104,9 +115,6 @@ class FillRect : public DisplayObject
         void set_color(string color);
 
     public:
-        MovieClip *parent;
-
-    public:
         virtual void render();
 };
 
@@ -123,7 +131,7 @@ class MovieClip : public DisplayObject
         float alpha;
         float frameSpeed;
         Rect4f clipRect;
-
+    
     private:
         unsigned int totalFrames;
         unsigned int currentFrame;
@@ -135,28 +143,7 @@ class MovieClip : public DisplayObject
         vector< vector<DisplayObject*> > frames;
 
     public:
-        MovieClip *parent;
-        
-    public:
-        MovieClip(name="", frameCounts=1) : name(name),totalFrames(frameCounts){
-            x = 0;
-            y = 0;
-            visible = true;
-            rotation = 0;
-            scaleX = 1;
-            scaleY = 1;
-            alpha = 1.0;
-            frameSpeed = 1/60;
-            clipRect = {0, 0, 0, 0};
-            currentFrame = 1;
-            frameFloatCursor = 0;
-            isStoped = false;
-            useAlphaTest = false;
-            
-            for( int i=0; i<=totalFrames; i++ ) {
-                frames.push_back(vector<DisplayObject*>());
-            };
-        }
+        MovieClip(const string &name="", const unsigned int frameCounts=1);
 
         virtual void render();
 
@@ -167,7 +154,7 @@ class MovieClip : public DisplayObject
 
         // 播放当前MovieClip,不影响子节点是否播放
         void play() {
-            isStoped = false
+            isStoped = false;
         };
 
         /* 跳到指定帧,并停止播放
@@ -277,12 +264,12 @@ class MovieClip : public DisplayObject
         /* 冒泡事件
          * 从子节点到父节点,递归到舞台
          */
-        void bubbleEvent(const Event *e);
+        void bubbleEvent(Event *e);
 
         /* 触发一个事件
          * 会调用该MovieClip所挂载的所有该事件类型对应的回调
          */
-        void triggerEvent(const Event *e);
+        void triggerEvent(Event *e);
 
         /* 找到冒泡某个事件对应的第一个响应MovieClip
          * @param eventType: 事件类型 GESTURE_DRAG/GESTURE_SWIPE

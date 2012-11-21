@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		BE95A51D165D384900E27B06 /* OpenGLES.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = BE95A51C165D384900E27B06 /* OpenGLES.framework */; };
 		BEA162BD165D236200855D49 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = BEA162BC165D236200855D49 /* UIKit.framework */; };
 		BEA162BF165D236200855D49 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = BEA162BE165D236200855D49 /* Foundation.framework */; };
 		BEA162C1165D236200855D49 /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = BEA162C0165D236200855D49 /* CoreGraphics.framework */; };
@@ -20,6 +21,16 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		BE95A50A165D2C4C00E27B06 /* JavaScript.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = JavaScript.h; sourceTree = "<group>"; };
+		BE95A50B165D2C4C00E27B06 /* JavaScriptCore.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = JavaScriptCore.h; sourceTree = "<group>"; };
+		BE95A50C165D2C4C00E27B06 /* JSBase.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = JSBase.h; sourceTree = "<group>"; };
+		BE95A50D165D2C4C00E27B06 /* JSContextRef.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = JSContextRef.h; sourceTree = "<group>"; };
+		BE95A50E165D2C4C00E27B06 /* JSObjectRef.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = JSObjectRef.h; sourceTree = "<group>"; };
+		BE95A50F165D2C4C00E27B06 /* JSStringRef.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = JSStringRef.h; sourceTree = "<group>"; };
+		BE95A510165D2C4C00E27B06 /* JSStringRefCF.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = JSStringRefCF.h; sourceTree = "<group>"; };
+		BE95A511165D2C4C00E27B06 /* JSValueRef.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = JSValueRef.h; sourceTree = "<group>"; };
+		BE95A512165D2C4C00E27B06 /* WebKitAvailability.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = WebKitAvailability.h; sourceTree = "<group>"; };
+		BE95A51C165D384900E27B06 /* OpenGLES.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGLES.framework; path = System/Library/Frameworks/OpenGLES.framework; sourceTree = SDKROOT; };
 		BEA162B8165D236200855D49 /* Canvas.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Canvas.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		BEA162BC165D236200855D49 /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
 		BEA162BE165D236200855D49 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
@@ -42,6 +53,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				BE95A51D165D384900E27B06 /* OpenGLES.framework in Frameworks */,
 				BEA162BD165D236200855D49 /* UIKit.framework in Frameworks */,
 				BEA162BF165D236200855D49 /* Foundation.framework in Frameworks */,
 				BEA162C1165D236200855D49 /* CoreGraphics.framework in Frameworks */,
@@ -51,9 +63,27 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		BE95A509165D2C4C00E27B06 /* JavaScriptCore */ = {
+			isa = PBXGroup;
+			children = (
+				BE95A50A165D2C4C00E27B06 /* JavaScript.h */,
+				BE95A50B165D2C4C00E27B06 /* JavaScriptCore.h */,
+				BE95A50C165D2C4C00E27B06 /* JSBase.h */,
+				BE95A50D165D2C4C00E27B06 /* JSContextRef.h */,
+				BE95A50E165D2C4C00E27B06 /* JSObjectRef.h */,
+				BE95A50F165D2C4C00E27B06 /* JSStringRef.h */,
+				BE95A510165D2C4C00E27B06 /* JSStringRefCF.h */,
+				BE95A511165D2C4C00E27B06 /* JSValueRef.h */,
+				BE95A512165D2C4C00E27B06 /* WebKitAvailability.h */,
+			);
+			name = JavaScriptCore;
+			path = ../lib/JavaScriptCore/JavaScriptCore;
+			sourceTree = "<group>";
+		};
 		BEA162AD165D236200855D49 = {
 			isa = PBXGroup;
 			children = (
+				BE95A509165D2C4C00E27B06 /* JavaScriptCore */,
 				BEA162DD165D23D800855D49 /* Display */,
 				BEA162C2165D236200855D49 /* Canvas */,
 				BEA162BB165D236200855D49 /* Frameworks */,
@@ -72,6 +102,7 @@
 		BEA162BB165D236200855D49 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				BE95A51C165D384900E27B06 /* OpenGLES.framework */,
 				BEA162BC165D236200855D49 /* UIKit.framework */,
 				BEA162BE165D236200855D49 /* Foundation.framework */,
 				BEA162C0165D236200855D49 /* CoreGraphics.framework */,
@@ -219,6 +250,7 @@
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
 				GCC_WARN_UNINITIALIZED_AUTOS = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = "\"$(SRCROOT)/../lib/JavaScriptCore\"";
 				IPHONEOS_DEPLOYMENT_TARGET = 5.0;
 				ONLY_ACTIVE_ARCH = YES;
 				PROVISIONING_PROFILE = "AB99E8B5-0851-49C8-ADDD-AB86C91BDBBB";
@@ -243,6 +275,7 @@
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
 				GCC_WARN_UNINITIALIZED_AUTOS = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = "\"$(SRCROOT)/../lib/JavaScriptCore\"";
 				IPHONEOS_DEPLOYMENT_TARGET = 5.0;
 				OTHER_CFLAGS = "-DNS_BLOCK_ASSERTIONS=1";
 				PROVISIONING_PROFILE = "AB99E8B5-0851-49C8-ADDD-AB86C91BDBBB";
@@ -260,6 +293,10 @@
 				GCC_PREFIX_HEADER = "Canvas/Canvas-Prefix.pch";
 				INFOPLIST_FILE = "Canvas/Canvas-Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 5.0;
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"\"$(SRCROOT)/../lib/JavaScriptCore\"",
+				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				WRAPPER_EXTENSION = app;
 			};
@@ -272,6 +309,10 @@
 				GCC_PREFIX_HEADER = "Canvas/Canvas-Prefix.pch";
 				INFOPLIST_FILE = "Canvas/Canvas-Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 5.0;
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"\"$(SRCROOT)/../lib/JavaScriptCore\"",
+				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				WRAPPER_EXTENSION = app;
 			};
