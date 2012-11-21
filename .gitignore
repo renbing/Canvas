@@ -9,3 +9,5 @@ android/obj
 android/gen
 android/local.properties
 android/jni/config.cpp
+ios/Canvas.xcodeproj/xcuserdata
+ios/Canvas.xcodeproj/project.xcworkspace/xcuserdata
