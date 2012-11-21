@@ -148,7 +148,7 @@ public class Canvas extends Activity {
         	}
         });
         
-        AbsoluteLayout.LayoutParams inputLP = new AbsoluteLayout.LayoutParams(400, 62, 0, 200);
+        //AbsoluteLayout.LayoutParams inputLP = new AbsoluteLayout.LayoutParams(400, 62, 0, 200);
         //layout.addView(input, inputLP);
         
         //stringFromJNI();

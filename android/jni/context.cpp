@@ -277,7 +277,7 @@ static v8::Handle<v8::Value> JS_rotate( const v8::Arguments& args )
 		return v8::Undefined();
 	}
 
-	float angle = args[0]->NumberValue();
+	float angle = (args[0]->NumberValue() / PI ) * 360;
 
 	context->rotate(angle);
 
@@ -723,11 +723,15 @@ void CCanvasContext::fillRect(float x, float y, float width, float height)
 
 void CCanvasContext::save()
 {
+	cleanDrawImage();
+
 	glPushMatrix();
 }
 
 void CCanvasContext::restore()
 {
+	cleanDrawImage();
+
 	glPopMatrix();
 }
 

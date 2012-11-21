@@ -78,6 +78,26 @@ static v8::Handle<v8::Value> JS_send( const v8::Arguments& args )
 	return v8::Undefined();
 }
 
+static v8::Handle<v8::Value> JS_getFile( const v8::Arguments& args )
+{
+	v8::HandleScope handleScope;
+
+	int argc = args.Length();
+
+	CXMLHttpRequest *request = jsGetCObject<CXMLHttpRequest>(args.Holder());
+
+	if( !request )
+	{
+		return v8::Undefined();
+	}
+
+	string post;
+
+	request->send(post);
+
+	return v8::Undefined();
+}
+
 static v8::Handle<v8::Value> JS_setRequestHeader( const v8::Arguments& args )
 {
 	v8::HandleScope handleScope;
@@ -117,6 +137,7 @@ static JSStaticValue jsStaticValues[] = {
 static JSStaticFunction jsStaticFunctions[] = {
 	JS_FUNCTION_DEF(open),
 	JS_FUNCTION_DEF(send),
+	JS_FUNCTION_DEF(getFile),	// 为了适应ios上的一个api
 	JS_FUNCTION_DEF(setRequestHeader),
 	{0, 0}
 };

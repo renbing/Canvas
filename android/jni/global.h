@@ -20,6 +20,8 @@
 #include <android/log.h>
 #define LOG(...) __android_log_print(ANDROID_LOG_INFO, "ProjectName", __VA_ARGS__)
 
+#define PI 3.1415926535897932f
+
 #include <v8.h>
 #include <zip.h>
 #include <string.h>

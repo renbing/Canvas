@@ -74,8 +74,8 @@ public class JavaAudioPlayer implements OnPreparedListener, OnCompletionListener
     }
     
     public void setLoop(boolean loop) {
-    	mLoop = true;
-    	mPlayer.setLooping(loop);
+    	mLoop = loop;
+    	mPlayer.setLooping(mLoop);
     	int loopMode = mLoop ? -1 : 0;
     	mSoundPool.setLoop(mSoundStreamID, loopMode);
     }
@@ -119,9 +119,10 @@ public class JavaAudioPlayer implements OnPreparedListener, OnCompletionListener
 	
 	public void play() {
 		mPlaying = true;
-		if( mSoundStreamID > 0 )
+		if( mSoundID > 0 )
 		{
-			mSoundPool.resume(mSoundStreamID);
+			int loopMode = mLoop ? -1 : 0;
+			mSoundStreamID = mSoundPool.play(mSoundID, mVolume, mVolume, 1, loopMode, 1f);
 		}
 		else if( mPlayerPrepared )
 		{
@@ -155,16 +156,9 @@ public class JavaAudioPlayer implements OnPreparedListener, OnCompletionListener
 	}
 
 	public void onLoadComplete(SoundPool soundPool, int sampleId, int status) {
-		int loopMode = mLoop ? -1 : 0;
-		mSoundStreamID = soundPool.play(mSoundID, mVolume, mVolume, 1, loopMode, 1f);
-		Log.v("debug", "sound: " + String.valueOf(mSoundID) + " " + String.valueOf(mSoundStreamID));
-		if( !(mPlaying || mAutoplay) )
+		if( mPlaying || mAutoplay )
 		{
-			soundPool.pause(mSoundStreamID);
-		}
-		else
-		{
-			mPlaying = true;
+			play();
 		}
 	}
 }
